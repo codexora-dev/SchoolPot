@@ -15,7 +15,10 @@ export function json(body: unknown, status = 200, origin = '') {
 }
 export async function protect(req: Request) {
   const origin = req.headers.get('Origin') || '';
-  const allowed = (Deno.env.get('ALLOWED_ORIGINS') || '')
+  const allowed = (
+    Deno.env.get('ALLOWED_ORIGINS') ||
+    'http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:4173,https://codexora-dev.github.io'
+  )
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
@@ -32,7 +35,7 @@ export async function protect(req: Request) {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const { data, error } = await client.auth.getUser(token.slice(7));
-  if (error || !data.user?.email_confirmed_at) throw new Error('AUTH');
+  if (error || !data.user || data.user.is_anonymous) throw new Error('AUTH');
   return { origin, client, user: data.user, token: token.slice(7), url, key };
 }
 export async function readBody(req: Request) {

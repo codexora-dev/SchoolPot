@@ -10,8 +10,8 @@ export function nickname(value) {
   return s;
 }
 export function password(value) {
-  if (typeof value !== 'string' || value.length < 12 || value.length > 128)
-    throw new Error('비밀번호는 12~128자로 입력해 주세요.');
+  if (typeof value !== 'string' || value.length < 8 || value.length > 128)
+    throw new Error('비밀번호는 8~128자로 입력해 주세요.');
   return value;
 }
 export function safePublicKey(key) {

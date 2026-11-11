@@ -18,23 +18,27 @@ try {
 const state = { user: null, me: null, dark: storedTheme === 'dark' };
 let renderId = 0;
 let recovery = false;
+let sessionVersion = 0;
 function applyTheme() {
   document.documentElement.dataset.theme = state.dark ? 'dark' : 'light';
 }
 applyTheme();
 async function refresh() {
-  state.me = null;
-  if (client) {
-    const { data } = await client.auth.getUser();
-    state.user = data.user;
-    if (state.user?.email_confirmed_at) {
-      try {
-        state.me = await call('me');
-      } catch (err) {
-        toast(err.message);
-      }
+  const version = ++sessionVersion;
+  let user = null,
+    me = null,
+    authError = null;
+  try {
+    if (client) {
+      const { data } = await client.auth.getUser();
+      user = data?.user || null;
+      if (user) me = await call('me');
     }
-  } else state.user = null;
+  } catch (err) {
+    authError = err.message;
+  }
+  if (version !== sessionVersion) return;
+  Object.assign(state, { user, me, authError });
 }
 async function logout() {
   if (client) {
@@ -44,10 +48,15 @@ async function logout() {
       toast('로그아웃에 실패했어요. 다시 시도해 주세요.');
       return;
     }
-    if (id) localStorage.removeItem(`schoolpot-draft:${id}`);
+    try {
+      if (id) localStorage.removeItem(`schoolpot-draft:${id}`);
+    } catch {
+      /* Session still signs out when storage is blocked. */
+    }
   }
   state.user = null;
   state.me = null;
+  state.authError = null;
   location.hash = '/';
   await render();
 }
@@ -61,14 +70,14 @@ function gate() {
   if (!state.user)
     return empty(
       '로그인하고 함께해요',
-      '게시글과 학교 정보는 이메일 인증을 마친 회원에게만 보여요.',
+      '게시글과 학교 정보는 로그인한 회원에게만 보여요.',
       link('로그인', '#/login', 'button primary'),
     );
-  if (!state.user.email_confirmed_at)
-    return empty(
-      '이메일 인증이 필요해요',
-      '가입 이메일로 전송된 인증 링크를 확인한 후 다시 로그인해 주세요.',
-    );
+  if (state.authError)
+    return errorBox(state.authError, async () => {
+      await refresh();
+      await render();
+    });
   if (!state.me?.profile)
     return empty(
       '마지막으로 닉네임을 정해주세요',
@@ -127,7 +136,7 @@ async function render() {
           el(
             'p',
             {},
-            '이메일 인증 후 닉네임을 설정하면 이용할 수 있어요. 재학생 인증 신청은 받지 않으며, 실제 재학생 여부를 확인하지 않습니다.',
+            '아이디와 8자 이상 비밀번호로 가입해 이용할 수 있어요. 이메일 인증은 없습니다. 재학생 인증 신청은 받지 않으며, 실제 재학생 여부를 확인하지 않습니다.',
           ),
           el('h2', {}, '안전한 커뮤니티'),
           el(
@@ -171,7 +180,7 @@ async function render() {
           ),
         ),
       );
-    else if (route === '/profile' && state.user && state.user.email_confirmed_at)
+    else if (route === '/profile' && state.user)
       page = profilePage(state, async () => {
         await refresh();
         await render();

@@ -1,4 +1,5 @@
 import { json, protect, readBody } from '../_shared/http.ts';
+import { school } from '../../../src/config/school.js';
 const cache = new Map<string, { expires: number; items: unknown[] }>();
 const plain = (text: unknown) =>
   String(text || '')
@@ -25,21 +26,20 @@ Deno.serve(async (req: Request) => {
     });
     if (error) return json({ error: 'FORBIDDEN_OR_RATE_LIMIT' }, 403, origin);
     const apiKey = Deno.env.get('NEIS_API_KEY'),
-      office = Deno.env.get('NEIS_OFFICE_CODE'),
-      school = Deno.env.get('NEIS_SCHOOL_CODE');
-    if (!apiKey || !office || !school) return json({ error: 'SCHOOL_NOT_CONFIGURED' }, 503, origin);
+      office = Deno.env.get('NEIS_OFFICE_CODE') || school.officeCode,
+      schoolCode = Deno.env.get('NEIS_SCHOOL_CODE') || school.schoolCode;
     const cacheKey = kind + day;
     const hit = cache.get(cacheKey);
     if (hit && hit.expires > Date.now()) return json({ items: hit.items }, 200, origin);
     const endpoint = kind === 'meals' ? 'mealServiceDietInfo' : 'SchoolSchedule';
     const url = new URL(`https://open.neis.go.kr/hub/${endpoint}`);
     url.search = new URLSearchParams({
-      KEY: apiKey,
+      ...(apiKey ? { KEY: apiKey } : {}),
       Type: 'json',
       ATPT_OFCDC_SC_CODE: office,
-      SD_SCHUL_CODE: school,
+      SD_SCHUL_CODE: schoolCode,
       pIndex: '1',
-      pSize: '100',
+      pSize: apiKey ? '100' : '5',
       ...(kind === 'meals'
         ? { MLSV_YMD: day.replaceAll('-', '') }
         : { AA_YMD: day.replaceAll('-', '') }),

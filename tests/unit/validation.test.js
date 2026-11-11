@@ -10,9 +10,9 @@ describe('입력 검증', () => {
     expect(() => nickname('<img src=x>')).toThrow();
     expect(nickname('학교친구_1')).toBe('학교친구_1');
   });
-  it('12자 미만 비밀번호를 거절한다', () => {
-    expect(() => password('password')).toThrow();
-    expect(password('my-long-password')).toBe('my-long-password');
+  it('8자 미만 비밀번호를 거절하고 8자는 허용한다', () => {
+    expect(() => password('short77')).toThrow();
+    expect(password('eight888')).toBe('eight888');
   });
   it('service role과 secret 키를 브라우저에서 거절한다', () => {
     expect(safePublicKey('sb_secret_fake')).toBe(false);

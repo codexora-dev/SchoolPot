@@ -9,13 +9,14 @@ test('홈과 모바일 레이아웃', async ({ page }) => {
     true,
   );
 });
-test('회원가입은 학생 인증 신청 없이 이메일과 닉네임으로 구성', async ({ page }) => {
+test('회원가입은 이메일 없이 아이디와 8자리 이상 비밀번호로 구성', async ({ page }) => {
   await page.goto('/#/signup');
-  await expect(page.getByLabel('닉네임', { exact: true })).toBeVisible();
-  await expect(page.getByLabel('이메일', { exact: true })).toBeVisible();
-  await expect(page.getByLabel('비밀번호', { exact: true })).toHaveAttribute('minlength', '12');
+  await expect(page.getByLabel('아이디', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('이메일', { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('닉네임', { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('비밀번호', { exact: true })).toHaveAttribute('minlength', '8');
   await expect(
-    page.getByText('재학생 인증 신청 없이 가입할 수 있어요. 이메일 인증은 필요해요.'),
+    page.getByText('아이디와 비밀번호만으로 시작하세요. 이메일 인증은 없어요.'),
   ).toBeVisible();
 });
 test('비로그인 글쓰기·관리자 접근 차단', async ({ page }) => {

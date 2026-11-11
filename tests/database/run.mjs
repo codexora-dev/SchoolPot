@@ -10,10 +10,10 @@ const users = {
   unverified: '44444444-4444-4444-8444-444444444444',
   anon: '55555555-5555-4555-8555-555555555555',
 };
-await db.exec(`create role anon;create role authenticated;create schema auth;
- create table auth.users(id uuid primary key,email_confirmed_at timestamptz,deleted_at timestamptz,is_anonymous boolean default false);
+await db.exec(`create role anon;create role authenticated;create role service_role;create schema auth;
+ create table auth.users(id uuid primary key,email_confirmed_at timestamptz,deleted_at timestamptz,is_anonymous boolean default false,email text,raw_app_meta_data jsonb default '{}',raw_user_meta_data jsonb default '{}');
  create table auth.sessions(id uuid primary key,user_id uuid references auth.users(id) on delete cascade);
- create function auth.jwt() returns jsonb language sql stable as $$select jsonb_build_object('session_id',current_setting('request.jwt.claim.sub',true))$$;
+ create function auth.jwt() returns jsonb language sql stable as $$select jsonb_build_object('session_id',current_setting('request.jwt.claim.sub',true),'role',current_setting('request.jwt.claim.role',true))$$;
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
  grant usage on schema auth to authenticated;grant execute on function auth.uid() to authenticated;`);
 await db.exec(
@@ -22,16 +22,34 @@ await db.exec(
     'utf8',
   ),
 );
+await db.exec(
+  await readFile(
+    new URL('../../supabase/migrations/20261111135652_username_accounts.sql', import.meta.url),
+    'utf8',
+  ),
+);
+await db.exec(
+  await readFile(
+    new URL('../../supabase/migrations/20261111140438_account_provisioning.sql', import.meta.url),
+    'utf8',
+  ),
+);
 for (const [name, id] of Object.entries(users))
-  await db.query('insert into auth.users values($1,$2,null,$3)', [
-    id,
-    name === 'unverified' ? null : new Date(),
-    name === 'anon',
-  ]);
+  await db.query(
+    'insert into auth.users(id,email_confirmed_at,deleted_at,is_anonymous,email,raw_app_meta_data) values($1,$2,null,$3,$4,$5)',
+    [
+      id,
+      null,
+      name === 'anon',
+      'student_' + name + '@accounts.schoolpot.invalid',
+      JSON.stringify(['a', 'b', 'admin'].includes(name) ? { account_type: 'username' } : {}),
+    ],
+  );
 await db.query('insert into auth.sessions select id,id from auth.users');
 async function as(who, role = 'authenticated') {
   await db.exec('reset role');
   await db.query("select set_config('request.jwt.claim.sub',$1,false)", [users[who] || '']);
+  await db.query("select set_config('request.jwt.claim.role',$1,false)", [role]);
   await db.exec(`set role ${role}`);
 }
 async function call(action, payload = {}) {
@@ -62,15 +80,15 @@ await ok('uid 없는 authenticated 차단', async () => {
   await as('');
   await denied(() => call('me'), /AUTH_REQUIRED/);
 });
-await ok('이메일 미인증 차단', async () => {
+await ok('서버에서 생성하지 않은 일반 Auth 계정 차단', async () => {
   await as('unverified');
-  await denied(() => call('me'), /EMAIL_REQUIRED/);
+  await denied(() => call('me'), /ACCOUNT_REQUIRED/);
 });
 await ok('익명 Auth 계정 차단', async () => {
   await as('anon');
   await denied(() => call('me'), /AUTH_REQUIRED/);
 });
-await ok('별도 학생 신청 없이 이메일 인증 후 프로필 생성', async () => {
+await ok('학생·이메일 인증 없이 아이디 계정 프로필 이용', async () => {
   for (const who of ['a', 'b', 'admin']) {
     await as(who);
     await call('save_profile', { nickname: `학생_${who}`, grade: 1 });
@@ -352,6 +370,80 @@ await ok('로그아웃으로 세션이 제거된 토큰의 재사용 차단', as
   await denied(() => call('me'), /AUTH_REQUIRED/);
   await db.exec('reset role');
   await db.query('insert into auth.sessions values($1,$1)', [users.b]);
+});
+await ok('일반 사용자의 복구 API 및 해시 직접 접근 차단', async () => {
+  await as('b');
+  await denied(
+    () => db.query("select public.account_gateway('claim_recovery','{}'::jsonb)"),
+    /permission denied/,
+  );
+  await denied(() => db.query('select * from private.account_handles'), /permission denied/);
+});
+await ok('복구 코드는 해시로 저장하고 한 번만 교체 가능', async () => {
+  await as('', 'service_role');
+  const gateway = (action, payload) =>
+    db.query('select public.account_gateway($1,$2::jsonb) result', [
+      action,
+      JSON.stringify(payload),
+    ]);
+  await gateway('set_recovery', { user_id: users.b, recovery_hash: 'a'.repeat(64) });
+  const first = await gateway('claim_recovery', {
+    username: 'student_b',
+    old_hash: 'a'.repeat(64),
+    new_hash: 'b'.repeat(64),
+  });
+  assert.equal(first.rows[0].result.user_id, users.b);
+  const reused = await gateway('claim_recovery', {
+    username: 'student_b',
+    old_hash: 'a'.repeat(64),
+    new_hash: 'c'.repeat(64),
+  });
+  assert.equal(reused.rows[0].result.user_id, null);
+});
+await ok('Auth 생성 후 메타데이터가 부착돼도 프로필 생성', async () => {
+  const temp = '66666666-6666-4666-8666-666666666666';
+  await db.exec('reset role');
+  await db.query('insert into auth.users(id,email) values($1,$2)', [
+    temp,
+    'lateprofile@accounts.schoolpot.invalid',
+  ]);
+  await db.query('update auth.users set raw_app_meta_data=$1 where id=$2', [
+    JSON.stringify({ account_type: 'username' }),
+    temp,
+  ]);
+  await as('', 'service_role');
+  await db.query("select public.account_gateway('set_recovery',$1::jsonb)", [
+    JSON.stringify({ user_id: temp, recovery_hash: 'e'.repeat(64) }),
+  ]);
+  await db.exec('reset role');
+  const r = await db.query('select nickname from private.profiles where id=$1', [temp]);
+  assert.equal(r.rows[0].nickname, 'lateprofile');
+  await db.query('delete from auth.users where id=$1', [temp]);
+});
+await ok('서버 가입 경로의 요청 제한', async () => {
+  await as('', 'service_role');
+  for (let n = 0; n < 6; n++)
+    await db.query("select public.account_gateway('limit',$1::jsonb)", [
+      JSON.stringify({ kind: 'signup', username: 'ratetest', ip_hash: 'd'.repeat(64) }),
+    ]);
+  await denied(
+    () =>
+      db.query("select public.account_gateway('limit',$1::jsonb)", [
+        JSON.stringify({ kind: 'signup', username: 'ratetest', ip_hash: 'd'.repeat(64) }),
+      ]),
+    /RATE_LIMIT/,
+  );
+});
+await ok('아이디 로그인 식별자 변경 거절', async () => {
+  await db.exec('reset role');
+  await denied(
+    () =>
+      db.query('update auth.users set email=$1 where id=$2', [
+        'renamed@accounts.schoolpot.invalid',
+        users.b,
+      ]),
+    /USERNAME_IMMUTABLE/,
+  );
 });
 await ok('탈퇴 후 작성자 연결 제거, 기존 JWT 접근 차단', async () => {
   await db.exec('reset role');

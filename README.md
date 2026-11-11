@@ -1,87 +1,74 @@
-# 스쿨팟
+# 스쿨팟 · 안남중학교
 
-우리 학교의 이야기가 모이는 커뮤니티. 모바일 우선 Vite + HTML/CSS/JavaScript + Supabase 프로젝트입니다. React를 사용하지 않습니다.
+창원 안남중학교 학생들이 학교생활과 이야기를 나누는 모바일 커뮤니티입니다. Vite + HTML/CSS/JavaScript ES Modules + Supabase를 사용합니다.
 
-**현재 상태: 로컬 V1 코드 및 보안 테스트 구현, 원격 DB 마이그레이션·Edge 배포 대기. 정식 운영 완료 상태가 아닙니다.**
+현재 아이디 계정용 DB 마이그레이션과 accounts/neis/delete-account Edge Function이 실제 Supabase 프로젝트에 적용되어 있습니다. 실제 가입·로그인·글·댓글·투표·알림·수행평가·급식·복구·탈퇴까지 검증했습니다. GitHub Pages 워크플로는 수동 실행 방식으로 준비했습니다.
 
-회원가입에는 재학생 인증 신청을 받지 않습니다. 이메일 인증 후 닉네임을 설정하면 이용하도록 구현했습니다. 실제 재학생 여부를 확인하는 서비스는 아닙니다.
+## 가입과 로그인
 
-## 실행
+- 이메일을 입력하거나 인증할 필요가 없습니다.
+- 아이디는 영문자로 시작하는 영문·숫자·밑줄 3~20자이며 대소문자를 구분하지 않습니다.
+- 비밀번호는 8~128자입니다. Supabase Auth에서 해시로 관리하며 앱 DB에 비밀번호를 저장하지 않습니다.
+- 가입 직후 프로필이 자동 생성됩니다. 닉네임과 학년은 프로필 화면에서 변경할 수 있습니다.
+- 가입 때 한 번 표시되는 256비트 복구 코드를 보관하세요. 이메일 없이 비밀번호를 재설정할 때 필요합니다. 복구 후에는 새 코드가 발급되고 이전 코드와 세션은 무효화됩니다.
+- 재학생 여부는 확인하지 않습니다. 학생증·학번·실명을 수집하지 않습니다.
 
-Node.js 22.12 이상과 npm이 필요합니다.
+## 로컬 실행
 
-```powershell
-cd C:\Users\PC\Desktop\스쿨팟
-npm ci
-# 이미 .env.local이 있으면 덮어쓰지 마세요.
-# 새 체크아웃에서만: Copy-Item .env.example .env.local
-npm run dev
-```
+Node.js 22.12 이상이 필요합니다. 프로젝트 폴더에서 아래 명령을 실행하세요.
 
-표시되는 로컬 주소(기본 `http://127.0.0.1:5173`)로 접속합니다. `.env.local`에는 전달받은 프로젝트 URL과 공개 키를 설정했습니다. 키는 Git에서 제외됩니다.
+    npm ci
+    npm run dev
 
-```dotenv
-VITE_SUPABASE_URL=https://hlglstdtgcodblynicmh.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=공개_publishable_키
-VITE_SCHOOL_NAME=우리 학교
-```
+기본 주소는 http://127.0.0.1:5173/ 입니다. 이미 설정된 .env.local은 덮어쓰지 마세요. 새 체크아웃에서는 .env.example을 .env.local로 복사하고 공개 키를 입력합니다.
 
-학교 이름은 빌드 시 설정합니다. `VITE_` 값은 브라우저에 공개되므로 비밀키를 넣으면 안 됩니다. 연결이 없으면 연결 안내를 표시하며 샘플 게시물이나 가짜 성공 응답은 제공하지 않습니다.
+    VITE_SUPABASE_URL=https://hlglstdtgcodblynicmh.supabase.co
+    VITE_SUPABASE_PUBLISHABLE_KEY=프로젝트의_publishable_키
+    VITE_SCHOOL_NAME=안남중학교
 
-## 주요 기능
+VITE_ 변수는 브라우저에 공개됩니다. 비밀키를 넣으면 안 됩니다. Vite가 secret/service_role 형식 키를 발견하면 빌드를 거절합니다.
 
-- 이메일 회원가입·인증·로그인·로그아웃·세션 유지·비밀번호 재설정·프로필·회원 탈퇴 UI/서버 함수
-- 7개 게시판, 글 작성·수정·삭제·조회, 기기 내 임시 저장, 조회수·공감·제목/본문 검색·최신/인기 정렬·24시간/7일 인기글
-- 댓글·대댓글·수정·삭제·공감·신고, 게시글별 익명 번호, 익명 작성자 ID 비노출
-- 투표 작성 및 1인 1표, 댓글/답글/공지 알림·읽음·설정
-- NEIS 급식·학사일정 프록시, 학년별 수행평가 일정 등록·수정·삭제·수정 요청, 학교 공지
-- 관리자 통계·닉네임 검색·회원 제한·게시글/댓글 삭제·신고 처리·공지 등록·작업 기록
-- 반응형 화면, 다크모드, 로딩/오류/빈 상태, 키보드 포커스, 접근성 레이블
+## 기능
 
-실제 기능 사용에는 DB 마이그레이션이 필요합니다. NEIS 및 탈퇴에는 Edge Function 설정·배포가 추가로 필요합니다. 사용자 차단 UI, 파일 첨부, 푸시 알림, 재학생 인증, V2/V3 기능은 포함하지 않았습니다.
+- 자유·익명·질문·공부·분실물·동아리·투표 게시판
+- 게시글/댓글 CRUD, 대댓글, 글별 익명 번호, 공감, 신고, 조회수
+- 검색, 최신/인기 정렬, 일간/주간 인기글, 기기 내 임시 저장
+- 투표 생성/참여 및 중복 투표 방지
+- 댓글/답글/공지 알림, 읽음 처리 및 알림 설정
+- 안남중학교 실제 NEIS 급식·학사일정, 학년별 수행평가 일정과 수정 요청
+- 관리자 통계·회원 검색/제한·신고 처리·게시물 삭제·공지·감사 기록
+- 아이디 가입/로그인, 복구 코드 재설정, 비밀번호 변경, 프로필, 재인증 탈퇴
+- 반응형, 라이트/다크 모드, 오류/로딩/빈 상태, 키보드 탐색
 
-## Supabase 연결과 배포
-
-1. 프로젝트 Dashboard에서 기존 스키마와 백업을 확인합니다.
-2. SQL Editor에서 `supabase/migrations/20261111133230_schoolpot_v1.sql`을 실행합니다. **현재 연결 도구의 프로젝트 접근 권한이 없어 이 작업을 자동 실행하지 않았습니다.**
-3. Auth에서 이메일 인증 활성화, 최소 비밀번호 12자, 익명 로그인 비활성화, Site URL/리다이렉트 URL을 설정합니다.
-4. 가입·이메일 인증·로그인·닉네임 저장 후 SQL Editor에서 첫 관리자를 직접 지정합니다. 절차는 `docs/deployment.md`를 참고하세요.
-5. NEIS 학교 코드·교육청 코드·API 키, 허용 Origin을 서버에 설정하고 Edge Functions를 배포합니다.
-6. `npm run build` 후 `dist`를 Cloudflare Pages 또는 Vercel로 배포합니다. 이 작업에서는 외부 공개 배포하지 않았습니다.
+admin 계정은 사용자 요청에 따라 서버에서 관리자 지정했습니다. 기본 관리자 비밀번호나 자동 승격 규칙은 없습니다.
 
 ## 검증
 
-```powershell
-npm run lint
-npm test
-npm run test:db
-npx playwright install chromium
-npm run test:e2e
-npm run build
-npm audit
-```
+    npm run lint
+    npm test
+    npm run test:db
+    npm run test:e2e
+    npm run build
+    npm audit
 
-DB 검증은 Docker 없이 PGlite PostgreSQL에서 역할·권한·함수·제약조건을 실제 실행합니다. Auth 서버, PostgREST, 이메일 발송, NEIS 실응답, 배포된 Edge Function 검증은 운영 전 별도로 해야 합니다. 브라우저 회원 테스트에는 테스트 전용 네트워크 fixture를 사용합니다.
+실제 서버에 임시 QA 계정을 만들고 정리하는 검사는 명시적으로 활성화합니다. CI에서는 실행하지 않습니다.
 
-## 폴더
+    $env:SCHOOLPOT_LIVE_TEST='1'
+    node tests/integration/live.mjs
+    npx playwright test tests/e2e/live.spec.js --workers=1
+    Remove-Item Env:\SCHOOLPOT_LIVE_TEST
 
-```text
-src/
-  components/   공통 레이아웃
-  config/       학교 이름·게시판 설정
-  lib/          안전한 DOM 생성·입력 검증
-  pages/        홈·인증·커뮤니티·학교생활·관리자
-  services/     Supabase Auth/RPC/Edge 어댑터
-  styles/       디자인 시스템·반응형·테마
-supabase/
-  migrations/   전체 스키마·권한·API 함수
-  functions/    NEIS·계정 삭제·공통 HTTP 보호
-tests/
-  unit/         입력 검증
-  database/     PostgreSQL 보안 시나리오
-  e2e/          비회원·회원·관리자·XSS·반응형
-docs/           요구사항·설계·보안·배포·진행 기록
-public/         정적 아이콘·Cloudflare 보안 헤더
-```
+## 구조
 
-상세 진행 상태는 `docs/requirements.md`, 보안 경계와 남은 검증은 `docs/security.md`, 배포·운영 절차는 `docs/deployment.md`에 정리했습니다.
+    src/components  공통 레이아웃
+    src/config      학교·게시판 설정
+    src/lib         안전한 DOM·아이디·입력 검증
+    src/pages       인증·홈·커뮤니티·학교생활·관리자
+    src/services    Auth/RPC/Edge 어댑터
+    src/styles      디자인 시스템·반응형
+    supabase/migrations  스키마·권한·버전별 SQL
+    supabase/functions   accounts·neis·delete-account
+    tests/unit·database·e2e·integration
+    docs            설계·보안·배포·진행·검증
+
+연결/Pages 배포는 docs/deployment.md, 검증 결과는 docs/verification.md, 보안 경계는 docs/security.md를 참고하세요. 파일 첨부·푸시 알림·사용자 차단 UI·V2/V3는 구현 범위 밖입니다. 정식 운영 정책과 이용약관/개인정보 처리방침은 운영자가 확정해야 합니다.

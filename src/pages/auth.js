@@ -1,116 +1,9 @@
 import { el, field, button, link, toast } from '../lib/dom.js';
-import { auth, client } from '../services/api.js';
+import { client } from '../services/api.js';
 import { call } from '../services/community.js';
-import { nickname, password } from '../lib/validation.js';
+import { nickname } from '../lib/validation.js';
 import { pageTitle } from '../components/layout.js';
-export function authPage(mode, refresh) {
-  const signup = mode === 'signup',
-    reset = mode === 'reset',
-    update = mode === 'password';
-  const title = signup
-    ? '우리 학교 이야기, 함께해요'
-    : reset
-      ? '비밀번호를 잊으셨나요?'
-      : update
-        ? '새 비밀번호 설정'
-        : '다시 만나서 반가워요';
-  const status = el('p', { role: 'status', class: 'form-status' });
-  const form = el(
-    'form',
-    {
-      class: 'auth-card form-stack',
-      onSubmit: async (e) => {
-        e.preventDefault();
-        const submit = e.target.querySelector('[type=submit]');
-        submit.disabled = true;
-        status.textContent = '처리 중이에요…';
-        try {
-          const values = Object.fromEntries(new FormData(e.target));
-          const redirectTo = `${location.origin}/`;
-          if (signup) {
-            await auth('signUp', {
-              email: values.email,
-              password: password(values.password),
-              options: {
-                emailRedirectTo: redirectTo,
-                data: { nickname: nickname(values.nickname) },
-              },
-            });
-            status.textContent =
-              '가입 요청을 받았어요. 이메일의 인증 링크를 확인한 뒤 로그인해 주세요.';
-            e.target.reset();
-          } else if (reset) {
-            await auth('resetPasswordForEmail', values.email, { redirectTo });
-            status.textContent = '등록된 이메일이라면 재설정 안내가 전송됩니다.';
-          } else if (update) {
-            await auth('updateUser', { password: password(values.password) });
-            toast('비밀번호를 변경했어요.');
-            location.hash = '/profile';
-          } else {
-            await auth('signInWithPassword', { email: values.email, password: values.password });
-            await refresh();
-            location.hash = '/';
-          }
-        } catch (err) {
-          status.textContent = err.message;
-        } finally {
-          submit.disabled = false;
-        }
-      },
-    },
-    el('div', { class: 'auth-mark' }, '▱'),
-    el('h2', {}, title),
-    el(
-      'p',
-      { class: 'muted' },
-      signup
-        ? '재학생 인증 신청 없이 가입할 수 있어요. 이메일 인증은 필요해요.'
-        : '학교의 작은 순간들을 스쿨팟에서 만나보세요.',
-    ),
-    signup
-      ? field('닉네임', 'nickname', 'text', {
-          required: true,
-          minlength: 2,
-          maxlength: 20,
-          autocomplete: 'nickname',
-        })
-      : null,
-    !update
-      ? field('이메일', 'email', 'email', { required: true, autocomplete: 'email', maxlength: 254 })
-      : null,
-    !reset
-      ? field(update ? '새 비밀번호' : '비밀번호', 'password', 'password', {
-          required: true,
-          minlength: signup || update ? 12 : 1,
-          maxlength: 128,
-          autocomplete: signup || update ? 'new-password' : 'current-password',
-        })
-      : null,
-    signup
-      ? el(
-          'p',
-          { class: 'hint' },
-          '재학생 여부는 확인하지 않아요. 실명·학번 등 개인정보는 게시하지 마세요.',
-        )
-      : null,
-    el(
-      'button',
-      { type: 'submit', class: 'button primary' },
-      signup ? '회원가입' : reset ? '재설정 이메일 받기' : update ? '비밀번호 변경' : '로그인',
-    ),
-    status,
-    el(
-      'div',
-      { class: 'auth-links' },
-      link(
-        signup ? '이미 계정이 있나요? 로그인' : '처음 오셨나요? 회원가입',
-        signup ? '#/login' : '#/signup',
-      ),
-      !reset && !signup ? link('비밀번호 찾기', '#/reset') : null,
-    ),
-  );
-  return el('section', { class: 'auth-wrap' }, form);
-}
+export { authPage } from './auth-form.js';
 export function profilePage(state, refresh) {
   const p = state.me?.profile;
   const status = el('p', { role: 'status' });
@@ -209,15 +102,20 @@ export function profilePage(state, refresh) {
                       '계정 삭제',
                       async () => {
                         try {
+                          const userId = state.user?.id;
                           if (dialog.querySelector('[name=confirm]').value !== '탈퇴')
                             throw new Error('탈퇴를 정확히 입력해 주세요.');
                           const { edge } = await import('../services/api.js');
                           await edge('delete-account', {
                             password: dialog.querySelector('[name=current-password]').value,
                           });
-                          await client.auth.signOut({ scope: 'local' });
-                          localStorage.removeItem(`schoolpot-draft:${state.user.id}`);
                           dialog.close();
+                          try {
+                            if (userId) localStorage.removeItem(`schoolpot-draft:${userId}`);
+                          } catch {
+                            /* Storage cleanup cannot undo a completed deletion. */
+                          }
+                          await client.auth.signOut({ scope: 'local' });
                           await refresh();
                           location.hash = '/';
                           toast('탈퇴 처리가 완료되었어요.');

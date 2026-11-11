@@ -1,4 +1,5 @@
-export const schoolName = import.meta.env.VITE_SCHOOL_NAME || '우리 학교';
+import { school } from './school.js';
+export const schoolName = import.meta.env.VITE_SCHOOL_NAME || school.name;
 export const boards = [
   { id: 'free', name: '자유게시판', icon: '☕', description: '소소한 일상부터 학교 이야기까지' },
   { id: 'anonymous', name: '익명게시판', icon: '◌', description: '이름 없이, 조금 더 솔직하게' },

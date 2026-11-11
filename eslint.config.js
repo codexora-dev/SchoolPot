@@ -28,6 +28,8 @@ export default [
           'HTMLElement',
           'Node',
           'crypto',
+          'fetch',
+          'AbortSignal',
           'atob',
           'btoa',
           'setTimeout',

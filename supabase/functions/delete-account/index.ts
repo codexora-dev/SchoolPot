@@ -24,7 +24,7 @@ Deno.serve(async (req: Request) => {
     });
     if (error || data.user?.id !== ctx.user!.id)
       return json({ error: 'REAUTHENTICATION_FAILED' }, 403, origin);
-    await verifier.auth.signOut();
+    await verifier.auth.signOut({ scope: 'local' });
     const secret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     if (!secret) throw new Error('CONFIG');
     const admin = createClient(ctx.url!, secret, {

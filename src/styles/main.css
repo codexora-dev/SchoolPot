@@ -1643,3 +1643,16 @@ dialog .actions {
 #toast:empty {
   display: none;
 }
+
+.recovery-code {
+  display: block;
+  padding: 20px;
+  background: var(--green-soft);
+  color: var(--green);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 15px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
