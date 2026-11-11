@@ -1,0 +1,2 @@
+-- Production intentionally has no sample accounts or sample posts.
+-- The seven board definitions are inserted by the initial migration.
