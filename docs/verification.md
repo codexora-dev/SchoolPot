@@ -13,7 +13,7 @@
 | `npm run build`       | 통과              | Vite 프로덕션 정적 빌드                                                    |
 | `npm audit`           | 알려진 취약점 0건 | 검사 시점 npm lockfile 의존성                                              |
 
-총 59개 자동화 테스트 통과. `.env.local`, node_modules, dist가 Git에서 제외되는 것도 확인했다. Git 브랜치는 `codex/schoolpot-v1`로 초기화했으며 외부 저장소 업로드/공개 배포는 하지 않았다.
+총 59개 자동화 테스트 통과. `.env.local`, node_modules, dist가 Git에서 제외되는 것도 확인했다. 초기 개발 브랜치에서 사용자 요청에 따라 `main`으로 변경하고 공개 저장소 `https://github.com/codexora-dev/SchooltPot`에 Git으로 업로드했다. 저장소의 기본 브랜치는 `main`이다. 웹사이트 공개 배포는 아직 수행하지 않았다.
 
 추가로 테스트용 secret 형식 키를 환경변수에 넣어 빌드가 시작 전에 거절되는지 확인했고, 정상 공개 키로 다시 빌드해 통과했다. 실제 비밀키는 사용하지 않았다. Vite 미리보기 HTTP 200도 확인했다. 점검용 개발 서버는 종료했으며 다시 보려면 `npm run dev`로 시작한다.
 
