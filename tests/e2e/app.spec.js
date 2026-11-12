@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './test.js';
 test('홈과 모바일 레이아웃', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: '우리 학교의 이야기가 모이는 곳' })).toBeVisible();

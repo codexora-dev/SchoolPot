@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './test.js';
 import { randomBytes } from 'node:crypto';
 test.skip(
   process.env.SCHOOLPOT_LIVE_TEST !== '1',

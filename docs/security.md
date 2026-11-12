@@ -32,4 +32,10 @@ Cloudflare/Vercel용 CSP·frame-ancestors·nosniff·HSTS·권한 제한을 제�
 
 ## 결과
 
-실제 서버와 브라우저 검증을 포함한 결과는 verification.md를 참고하세요. Security Advisor에는 ERROR/WARN이 없고 기본 거부 RLS의 no policy INFO 23건만 남아 있습니다. [해당 Advisor 설명](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)을 참고하되 불필요한 허용 정책을 추가하지 마세요.
+실제 서버와 브라우저 검증을 포함한 결과는 verification.md를 참고하세요. 최신 Security Advisor에는 기본 거부 RLS의 no policy INFO 24건과 Auth 유출 비밀번호 보호 비활성 WARN 1건이 있습니다. [해당 Advisor 설명](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)을 참고하되 불필요한 허용 정책을 추가하지 마세요.
+
+## 사이트 진입 팝업
+
+공개 안내만 site_popups RPC로 비회원 조회할 수 있습니다. private 테이블의 직접 권한은 계속 거절하며, 제목·본문·닫기 옵션·버전·팝업 ID만 반환합니다. 작성자 UUID, 중지된 팝업, 관리자 기록은 반환하지 않습니다. manage_popups는 private.community의 실제 계정·세션·역할 검사와 이용 제한 검사를 거치고 요청 제한·기본 닫기 강제·동시 게시 제한·오래된 수정 차단·감사 기록을 적용합니다. 공개 안내 읽기 예외는 일반 커뮤니티 데이터에 적용되지 않습니다.
+
+[유출 비밀번호 보호 설정](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) 비활성 WARN 1건도 확인했습니다. 팝업과 별개인 Auth 설정이며, 공식 문서상 Pro 이상 기능이므로 임의의 유료 플랜 변경은 하지 않았습니다.

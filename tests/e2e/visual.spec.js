@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './test.js';
 test('데스크톱·모바일 화면 캡처와 콘솔 오류 확인', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (err) => errors.push(err.message));

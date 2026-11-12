@@ -34,6 +34,12 @@ await db.exec(
     'utf8',
   ),
 );
+await db.exec(
+  await readFile(
+    new URL('../../supabase/migrations/20261112113812_site_popups.sql', import.meta.url),
+    'utf8',
+  ),
+);
 for (const [name, id] of Object.entries(users))
   await db.query(
     'insert into auth.users(id,email_confirmed_at,deleted_at,is_anonymous,email,raw_app_meta_data) values($1,$2,null,$3,$4,$5)',
@@ -444,6 +450,130 @@ await ok('아이디 로그인 식별자 변경 거절', async () => {
       ]),
     /USERNAME_IMMUTABLE/,
   );
+});
+
+const popupAdmin = async (action, payload = {}) =>
+  (
+    await db.query('select public.manage_popups($1,$2::jsonb) result', [
+      action,
+      JSON.stringify(payload),
+    ])
+  ).rows[0].result;
+const publicPopups = async () =>
+  (await db.query('select public.site_popups() result')).rows[0].result;
+let popupId, pausedId;
+await ok('비회원 팝업 조회 허용 및 관리 함수 차단', async () => {
+  await as('', 'anon');
+  assert.deepEqual(await publicPopups(), []);
+  await denied(() => popupAdmin('list'), /permission denied/);
+  await denied(() => db.query('select * from private.site_popups'), /permission denied/);
+});
+await ok('일반 회원 팝업 등록·수정·삭제·목록 관리 차단', async () => {
+  await as('b');
+  for (const action of ['list', 'save', 'delete'])
+    await denied(
+      () => popupAdmin(action, { title: '권한 위조', body: '차단되어야 합니다', is_admin: true }),
+      /FORBIDDEN/,
+    );
+});
+await ok('관리자 팝업 등록 및 공개 응답의 작성자 정보 보호', async () => {
+  await as('admin');
+  popupId = (
+    await popupAdmin('save', {
+      title: '학교 안내 팝업',
+      body: '알려드립니다',
+      close_options: ['once', 'today', 'forever'],
+      is_active: true,
+    })
+  ).id;
+  await as('', 'anon');
+  const list = await publicPopups();
+  assert.equal(list.length, 1);
+  assert.equal(list[0].id, popupId);
+  assert.equal(list[0].title, '학교 안내 팝업');
+  assert.equal(JSON.stringify(list).includes(users.admin), false);
+  assert.equal('created_by' in list[0], false);
+});
+await ok('게시 중지 팝업은 공개하지 않는다', async () => {
+  await as('admin');
+  pausedId = (
+    await popupAdmin('save', {
+      title: '비공개 팝업',
+      body: '아직 공개하면 안 됩니다',
+      close_options: ['once'],
+      is_active: false,
+    })
+  ).id;
+  assert.equal((await popupAdmin('list')).length, 2);
+  await as('', 'anon');
+  assert.equal(
+    (await publicPopups()).some((p) => p.id === pausedId),
+    false,
+  );
+});
+await ok('수정하면 팝업 버전 증가 및 오래된 수정 차단', async () => {
+  await as('admin');
+  await popupAdmin('save', {
+    id: popupId,
+    revision: 1,
+    title: '수정된 팝업',
+    body: '새 본문',
+    close_options: ['once', 'today'],
+    is_active: true,
+  });
+  const p = (await popupAdmin('list')).find((p) => p.id === popupId);
+  assert.equal(p.revision, 2);
+  await denied(
+    () => popupAdmin('save', { ...p, revision: 1, title: '오래된 변경' }),
+    /STALE_POPUP/,
+  );
+  await popupAdmin('save', { ...p, is_active: false });
+  assert.equal((await popupAdmin('list')).find((p) => p.id === popupId).revision, 2);
+  await popupAdmin('save', { ...p, is_active: true });
+});
+await ok('기본 닫기 제거·미지원 옵션·빈 본문·길이 초과 거절', async () => {
+  await as('admin');
+  for (const options of [['forever'], ['once', 'invalid'], []])
+    await denied(
+      () => popupAdmin('save', { title: '잘못된 안내', body: '본문', close_options: options }),
+      /INVALID_INPUT/,
+    );
+  for (const body of [' ', 'x'.repeat(8001)])
+    await denied(
+      () => popupAdmin('save', { title: '길이 검증', body, close_options: ['once'] }),
+      /check constraint/,
+    );
+});
+await ok('동시 게시 3개 제한 및 중지 후 활성화', async () => {
+  await as('admin');
+  const paused = (await popupAdmin('list')).find((p) => p.id === pausedId);
+  await popupAdmin('save', { ...paused, is_active: true });
+  await popupAdmin('save', {
+    title: '세 번째 팝업',
+    body: '안내',
+    close_options: ['once'],
+    is_active: true,
+  });
+  await denied(
+    () =>
+      popupAdmin('save', {
+        title: '네 번째 팝업',
+        body: '안내',
+        close_options: ['once'],
+        is_active: true,
+      }),
+    /POPUP_LIMIT/,
+  );
+  assert.equal((await publicPopups()).length, 3);
+});
+await ok('팝업 작업 감사 기록 및 관리자 삭제', async () => {
+  await as('admin');
+  const logs = await call('admin_audit');
+  assert.ok(logs.some((log) => log.action === 'popup_save'));
+  for (const p of await popupAdmin('list'))
+    await popupAdmin('delete', { id: p.id, revision: p.revision });
+  assert.deepEqual(await publicPopups(), []);
+  assert.ok((await call('admin_audit')).some((log) => log.action === 'popup_delete'));
 });
 await ok('탈퇴 후 작성자 연결 제거, 기존 JWT 접근 차단', async () => {
   await db.exec('reset role');

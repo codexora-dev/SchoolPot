@@ -7,6 +7,7 @@ Supabase 프로젝트 hlglstdtgcodblynicmh에 다음 마이그레이션을 순�
 1. 20261111133230_schoolpot_v1.sql
 2. 20261111135652_username_accounts.sql
 3. 20261111140438_account_provisioning.sql
+4. 20261112113812_site_popups.sql
 
 accounts, neis, delete-account 함수가 배포되어 있습니다. 기존 프로젝트에서 위 SQL을 다시 실행하지 마세요. 새 프로젝트에서는 순서대로 적용하고 Edge Functions를 배포합니다. Auth 사용자를 직접 만들어도 account_handles에 등록되지 않은 계정은 커뮤니티를 사용할 수 없습니다.
 
@@ -50,3 +51,7 @@ GitHub Pages는 저장소의 Cloudflare _headers 및 Vercel 설정을 적용하�
 실제 학생 모집 전 운영자 연락처·이용약관·개인정보 처리방침·연령과 동의 절차를 확정합니다. 복구 코드를 잃어버린 사용자의 본인 확인 정책도 운영자가 정해야 합니다. 관리자도 본인 확인 없이 임의로 계정을 복구하면 안 됩니다.
 
 신고·공지·이용 제한 및 관리자 기록을 검토하고 Auth/DB/Edge 사용량을 관찰하세요. NEIS 무료 조회 제한, 공유 IP의 가입 제한, 대량 공지 알림 부하를 고려하세요. 로그인 요청은 Auth 측 제한, 가입/복구는 별도 DB 버킷 제한을 사용합니다. 보존기간은 임의로 결정하지 않았으며 백업·로그·신고 보존 정책 확정 후 정리 작업을 구성합니다.
+
+## 팝업 RPC
+
+사이트 진입 안내의 공개 조회는 public.site_popups(), 관리 기능은 public.manage_popups(text,jsonb)를 사용합니다. 새 프로젝트에는 네 번째 마이그레이션까지 적용해야 합니다. 비회원의 관리 호출과 private.site_popups 직접 조회는 거절되어야 합니다. 팝업만을 위한 Edge Function 추가 배포는 필요하지 않습니다.

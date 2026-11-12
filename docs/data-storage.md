@@ -1,6 +1,6 @@
 # 게시글은 어디에 저장되나요?
 
-프로젝트 hlglstdtgcodblynicmh의 PostgreSQL에 영구 저장됩니다. 기본 public 스키마에는 커뮤니티 테이블을 만들지 않았습니다. 데이터 테이블 23개는 private 스키마에 있습니다.
+프로젝트 hlglstdtgcodblynicmh의 PostgreSQL에 영구 저장됩니다. 기본 public 스키마에는 커뮤니티 테이블을 만들지 않았습니다. 데이터 테이블 24개는 private 스키마에 있습니다.
 
 | 데이터                         | 저장 위치                   |
 | ------------------------------ | --------------------------- |
@@ -23,3 +23,5 @@ from private.posts order by created_at desc limit 20;
 브라우저의 글쓰기 → public.community RPC → 로그인·세션·등록 계정·소유권 검사 → private.posts 저장 순서입니다. 새로고침하거나 다른 기기로 로그인해도 게시된 글은 DB에서 다시 읽습니다. 익명 글의 실제 작성자 ID는 일반 사용자에게 반환하지 않습니다.
 
 private를 Data API의 Exposed schemas에 추가하거나 일반 클라이언트에 테이블 조회 권한을 부여할 필요는 없습니다. 관리자 Dashboard의 조회와 일반 사용자의 접근 권한은 별개입니다.
+
+방문 안내 팝업은 private.site_popups에 저장합니다. 게시 중인 팝업만 별도 공개 RPC로 반환하며 실제 작성자 정보는 포함하지 않습니다.

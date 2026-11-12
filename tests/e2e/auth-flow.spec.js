@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './test.js';
 test('가입 성공 시 복구 코드를 한 번 표시하고 이메일 인증을 요구하지 않는다', async ({ page }) => {
   await page.route('**/functions/v1/accounts', async (route) => {
     if (route.request().method() === 'OPTIONS')

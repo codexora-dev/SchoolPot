@@ -38,3 +38,7 @@
 account_handles는 사용자 UUID·고유 아이디·복구 코드 해시를 비공개로 저장하고 탈퇴 시 CASCADE 삭제한다. account_attempts는 가입/복구의 IP 해시·아이디·전역 카운터이며 7일 이상 된 버킷을 정리한다. 두 테이블도 RLS와 직접 접근 권한 회수를 적용한다.
 
 초기 스키마, username_accounts, account_provisioning의 마이그레이션 3개를 실제 프로젝트에 적용했다. account_provisioning은 Auth 생성 후 메타데이터 저장 시점 차이를 처리한다. 서버만 보호된 계정 유형과 내부 식별자를 확인해 매핑·프로필·해시를 등록한다. 이메일 인증은 가입 조건이 아니며, 현재 세션과 등록된 아이디 계정은 매 RPC에서 확인한다.
+
+## 사이트 진입 팝업
+
+20261112113812_site_popups.sql을 추가로 적용했습니다. private.site_popups는 RLS 및 직접 권한 회수로 보호합니다. 공개 site_popups invoker 래퍼는 제한된 definer projection으로 게시 중인 최대 3개만 반환합니다. 관리 RPC는 인증·현재 세션·아이디 계정·관리자 역할을 검사하고, 동시 활성화 직렬화·버전 검사·기본 닫기 유지·감사 기록을 적용합니다. 관리자 팝업 사용법은 popups.md를 참고하세요.

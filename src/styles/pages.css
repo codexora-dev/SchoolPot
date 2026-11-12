@@ -741,3 +741,133 @@
   background: #453b28;
   color: #d9b882;
 }
+/* Administrator-authored site-entry announcements. */
+.site-popup {
+  width: 560px;
+  padding: 26px;
+  max-width: calc(100vw - 28px);
+}
+.site-popup-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.site-popup h2 {
+  font-size: 26px;
+  line-height: 1.55;
+  margin: 0 0 18px;
+  overflow-wrap: anywhere;
+}
+.site-popup-body {
+  font-size: 15px;
+  line-height: 1.95;
+  max-height: min(45dvh, 440px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 5px;
+}
+.site-popup-footer {
+  border-top: 1px solid var(--line);
+  margin-top: 25px;
+  padding-top: 15px;
+}
+.site-popup-footer .hint {
+  margin: 0 0 14px;
+}
+.site-popup-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.site-popup-options .button {
+  flex: 1;
+  padding: 12px 14px;
+  font-size: 13px;
+}
+.popup-editor {
+  width: 620px;
+}
+.popup-close-settings {
+  margin: 0;
+  padding: 13px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  min-width: 0;
+}
+.popup-close-settings legend {
+  font-size: 13px;
+  padding: 0 6px;
+  color: var(--muted);
+}
+.popup-close-settings .checkbox {
+  min-height: 38px;
+}
+.popup-manager-heading {
+  align-items: start;
+  flex-wrap: wrap;
+}
+.popup-manager-heading .hint {
+  max-width: 560px;
+  margin: 10px 0 0;
+}
+.popup-manager-heading .actions {
+  gap: 8px;
+}
+.popup-admin-card h3 {
+  overflow-wrap: anywhere;
+  margin: 0 0 12px;
+}
+.popup-admin-card .preserve {
+  font-size: 14px;
+  max-height: 140px;
+  overflow: hidden;
+}
+.board-chip.paused {
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+@media (max-width: 760px) {
+  .site-popup {
+    padding: 22px 20px;
+  }
+  .site-popup h2 {
+    font-size: 23px;
+  }
+  .site-popup-body {
+    font-size: 15px;
+    max-height: 40dvh;
+  }
+  .site-popup-options .button {
+    flex-basis: 100%;
+    font-size: 14px;
+  }
+  .site-popup-footer {
+    margin-top: 22px;
+  }
+  .popup-editor {
+    padding: 24px 20px;
+  }
+  .popup-editor > .form-stack > .actions {
+    gap: 8px;
+  }
+  .popup-editor > .form-stack > .actions > .button {
+    font-size: 13px;
+    min-width: 0;
+    padding: 12px;
+  }
+  .popup-manager-heading {
+    gap: 17px;
+  }
+  .popup-manager-heading > .actions {
+    width: 100%;
+  }
+  .popup-manager-heading > .actions .button {
+    flex: 1;
+  }
+  .popup-admin-card > .actions .button {
+    flex: 1;
+    min-width: calc(50% - 10px);
+  }
+}

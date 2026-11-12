@@ -33,6 +33,9 @@ export function friendlyError(error) {
     NOT_FOUND: '찾을 수 없는 항목이에요.',
     INVALID_INPUT: '입력 내용을 확인해 주세요.',
     ALREADY_VOTED: '이미 투표한 항목이에요.',
+    STALE_POPUP: '다른 변경사항이 있어요. 팝업 목록을 새로고침한 뒤 다시 시도해 주세요.',
+    POPUP_LIMIT: '동시에 게시할 수 있는 팝업은 최대 3개예요. 기존 팝업을 중지한 뒤 등록해 주세요.',
+    POPUP_STORAGE_LIMIT: '등록된 팝업이 100개예요. 필요 없는 팝업을 정리한 뒤 등록해 주세요.',
   };
   for (const [key, value] of Object.entries(messages))
     if (error.message?.includes(key)) return value;

@@ -1,9 +1,11 @@
 import { el, field, button, link, toast, empty, date } from '../lib/dom.js';
 import { pageTitle } from '../components/layout.js';
 import { call } from '../services/community.js';
+import { popupManager } from './admin-popups.js';
 export async function adminPage(params, reload) {
   const tab = params.get('tab') || 'overview';
   const main = el('div');
+  if (tab === 'popups') main.append(await popupManager(reload));
   const action = async (name, data) => {
     try {
       await call(name, data);
@@ -203,6 +205,7 @@ export async function adminPage(params, reload) {
         members: '회원 관리',
         reports: '신고 관리',
         notice: '공지 등록',
+        popups: '팝업 관리',
         audit: '작업 기록',
       }).map(([k, v]) => link(v, `#/admin?tab=${k}`, `tab ${tab === k ? 'selected' : ''}`)),
     ),

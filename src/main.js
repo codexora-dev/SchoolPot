@@ -10,6 +10,7 @@ import { boardPage, postPage, writePage } from './pages/community.js';
 import { notificationsPage, noticesPage, neisPage, assessmentsPage } from './pages/school.js';
 import { adminPage } from './pages/admin.js';
 import { icon } from './components/icons.js';
+import { showSitePopups } from './components/site-popups.js';
 let storedTheme;
 try {
   storedTheme = localStorage.getItem('schoolpot-theme');
@@ -225,6 +226,7 @@ async function render() {
     if (current === renderId) {
       main.replaceChildren(page);
       document.title = `${page.querySelector('h1,h2')?.textContent || '우리 학교의 작은 광장'} · 스쿨팟`;
+      void showSitePopups();
     }
   } catch (err) {
     if (current === renderId) main.replaceChildren(errorBox(err.message, render));
