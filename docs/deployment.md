@@ -30,14 +30,14 @@ NEIS 기본 학교는 안남중학교, S10, 9022150입니다. NEIS_OFFICE_CODE/N
 
 ## GitHub Pages
 
-저장소: https://github.com/codexora-dev/SchooltPot
+저장소: https://github.com/codexora-dev/SchoolPot
 
 1. Settings → Pages의 배포 소스를 GitHub Actions로 선택합니다.
 2. Actions Variables에 VITE_SUPABASE_URL과 VITE_SUPABASE_PUBLISHABLE_KEY를 등록합니다. 공개 키만 사용합니다. .env.local은 업로드하지 않습니다.
 3. Actions의 Deploy GitHub Pages 워크플로를 main에서 수동 실행합니다.
-4. 워크플로는 검사·빌드 후 /SchooltPot/ 경로로 dist를 배포합니다. 로컬에서 해당 하위 경로와 프로덕션 CSP를 브라우저로 검증했습니다.
+4. 워크플로는 검사·빌드 후 /SchoolPot/ 경로로 dist를 배포합니다. 로컬에서 해당 하위 경로와 프로덕션 CSP를 브라우저로 검증했습니다.
 
-현재 수동 실행 방식이므로 Git push만으로 웹사이트가 자동 공개되지는 않습니다. 공개 배포는 사용자 승인 후 실행합니다. hash router를 사용해 별도 SPA rewrite가 필요 없습니다.
+사용자 승인에 따라 https://codexora-dev.github.io/SchoolPot/ 에 공개 배포했습니다. main에 프론트엔드·빌드 관련 변경이 올라오면 자동 배포하며 수동 실행도 지원합니다. 저장소 이름으로 경로를 생성하므로 이름을 바꾼 뒤에는 반드시 재빌드하세요. 배포 후 최신 빌드 식별자와 JS/CSS의 HTTP 상태·Content-Type을 검사합니다. hash router를 사용해 별도 SPA rewrite가 필요 없습니다.
 
 GitHub Pages는 저장소의 Cloudflare _headers 및 Vercel 설정을 적용하지 않습니다. 이를 보완해 프로덕션 빌드에 CSP meta를 삽입했습니다. meta CSP로 frame-ancestors 같은 응답 헤더 전용 정책을 적용할 수는 없으므로, 전체 헤더 제어가 필요하면 제공된 Cloudflare/Vercel 설정을 사용하세요.
 

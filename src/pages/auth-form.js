@@ -2,6 +2,7 @@ import { el, field, button, link, toast } from '../lib/dom.js';
 import { auth, client } from '../services/api.js';
 import { register, recover, signIn } from '../services/accounts.js';
 import { password } from '../lib/validation.js';
+import { icon } from '../components/icons.js';
 export function authPage(mode, refresh) {
   const signup = mode === 'signup',
     reset = mode === 'reset',
@@ -75,7 +76,7 @@ export function authPage(mode, refresh) {
         }
       },
     },
-    el('div', { class: 'auth-mark' }, '▱'),
+    el('div', { class: 'auth-mark' }, icon('cap', 27)),
     el('h2', {}, title),
     el(
       'p',

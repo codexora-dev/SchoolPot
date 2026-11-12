@@ -20,6 +20,11 @@ export default defineConfig(({ mode }) => {
           return [
             {
               tag: 'meta',
+              attrs: { name: 'schoolpot-build', content: process.env.GITHUB_SHA || 'local' },
+              injectTo: 'head',
+            },
+            {
+              tag: 'meta',
               attrs: {
                 'http-equiv': 'Content-Security-Policy',
                 content:

@@ -1,6 +1,18 @@
 name: Deploy GitHub Pages
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      [
+        'src/**',
+        'public/**',
+        'scripts/check-deployment.mjs',
+        'index.html',
+        'vite.config.js',
+        'package*.json',
+        '.github/workflows/pages.yml',
+      ]
 permissions:
   contents: read
 concurrency:
@@ -34,6 +46,7 @@ jobs:
   deploy:
     needs: build
     permissions:
+      contents: read
       pages: write
       id-token: write
     runs-on: ubuntu-latest
@@ -41,6 +54,15 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+      - name: Verify published HTML and assets
+        run: node scripts/check-deployment.mjs
+        env:
+          DEPLOYMENT_URL: ${{ steps.deployment.outputs.page_url }}
+          EXPECTED_BUILD: ${{ github.sha }}

@@ -3,6 +3,7 @@ import { boards } from '../config/site.js';
 import { welcome } from '../components/layout.js';
 import { call } from '../services/community.js';
 import { postCard } from './community.js';
+import { icon as uiIcon } from '../components/icons.js';
 export async function homePage(state) {
   const enabled = state.user && state.me?.profile;
   let posts = [],
@@ -83,16 +84,16 @@ export async function homePage(state) {
           'div',
           { class: 'quick-links' },
           ...[
-            ['◒', '오늘의 급식', '점심시간이 기다려져요', '/meals'],
-            ['▦', '학사일정', '중요한 날을 한눈에', '/schedule'],
-            ['✓', '수행평가', '미리 챙기는 우리 일정', '/assessments'],
+            ['meal', '오늘의 급식', '점심시간이 기다려져요', '/meals'],
+            ['calendar', '학사일정', '중요한 날을 한눈에', '/schedule'],
+            ['check', '수행평가', '미리 챙기는 우리 일정', '/assessments'],
           ].map(
             ([icon, title, desc, href]) =>
               link('', `#${href}`, 'quick-card').appendChild(
                 el(
                   'div',
                   {},
-                  el('span', { class: 'quick-icon' }, icon),
+                  el('span', { class: 'quick-icon' }, uiIcon(icon, 20)),
                   el('strong', {}, title),
                   el('small', {}, desc),
                 ),

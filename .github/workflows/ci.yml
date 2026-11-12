@@ -2,7 +2,7 @@ name: Checks
 on: [push, pull_request]
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -13,7 +13,6 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run test:db
-      - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
         env:
           VITE_SUPABASE_URL: https://hlglstdtgcodblynicmh.supabase.co

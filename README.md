@@ -2,7 +2,7 @@
 
 창원 안남중학교 학생들이 학교생활과 이야기를 나누는 모바일 커뮤니티입니다. Vite + HTML/CSS/JavaScript ES Modules + Supabase를 사용합니다.
 
-현재 아이디 계정용 DB 마이그레이션과 accounts/neis/delete-account Edge Function이 실제 Supabase 프로젝트에 적용되어 있습니다. 실제 가입·로그인·글·댓글·투표·알림·수행평가·급식·복구·탈퇴까지 검증했습니다. GitHub Pages 워크플로는 수동 실행 방식으로 준비했습니다.
+현재 아이디 계정용 DB 마이그레이션과 accounts/neis/delete-account Edge Function이 실제 Supabase 프로젝트에 적용되어 있습니다. 실제 가입·로그인·글·댓글·투표·알림·수행평가·급식·복구·탈퇴까지 검증했습니다. 공개 사이트는 https://codexora-dev.github.io/SchoolPot/ 입니다. main의 프론트엔드 변경은 검사 후 자동 배포합니다.
 
 ## 가입과 로그인
 
@@ -72,3 +72,7 @@ admin 계정은 사용자 요청에 따라 서버에서 관리자 지정했습�
     docs            설계·보안·배포·진행·검증
 
 연결/Pages 배포는 docs/deployment.md, 검증 결과는 docs/verification.md, 보안 경계는 docs/security.md를 참고하세요. 파일 첨부·푸시 알림·사용자 차단 UI·V2/V3는 구현 범위 밖입니다. 정식 운영 정책과 이용약관/개인정보 처리방침은 운영자가 확정해야 합니다.
+
+## 모바일·PC GUI
+
+320~1440px 화면을 검증했습니다. PC 사이드바, 태블릿 아이콘 메뉴, 모바일 하단 메뉴·검색창, 계정 드롭다운, 비밀번호 보기, 터치용 입력창과 버튼을 제공합니다. 자세한 저장 구조는 docs/data-storage.md에서 확인할 수 있습니다.

@@ -9,6 +9,7 @@ import { authPage, profilePage } from './pages/auth.js';
 import { boardPage, postPage, writePage } from './pages/community.js';
 import { notificationsPage, noticesPage, neisPage, assessmentsPage } from './pages/school.js';
 import { adminPage } from './pages/admin.js';
+import { icon } from './components/icons.js';
 let storedTheme;
 try {
   storedTheme = localStorage.getItem('schoolpot-theme');
@@ -172,7 +173,21 @@ async function render() {
                 el(
                   'div',
                   {},
-                  el('span', { class: 'quick-icon' }, b.icon),
+                  el(
+                    'span',
+                    { class: 'quick-icon' },
+                    icon(
+                      {
+                        free: 'chat',
+                        anonymous: 'anonymous',
+                        questions: 'question',
+                        study: 'book',
+                        lost: 'search',
+                        clubs: 'club',
+                        polls: 'poll',
+                      }[b.id],
+                    ),
+                  ),
                   el('h2', {}, b.name),
                   el('p', { class: 'muted' }, b.description),
                 ),
@@ -215,7 +230,15 @@ async function render() {
     if (current === renderId) main.replaceChildren(errorBox(err.message, render));
   }
 }
-window.addEventListener('hashchange', render);
+window.addEventListener('hashchange', async () => {
+  await render();
+  document.querySelector('#main')?.focus({ preventScroll: true });
+  window.scrollTo({ top: 0 });
+});
+document.querySelector('.skip-link')?.addEventListener('click', (event) => {
+  event.preventDefault();
+  document.querySelector('#main')?.focus();
+});
 if (client)
   client.auth.onAuthStateChange((event) => {
     if (event === 'PASSWORD_RECOVERY') {

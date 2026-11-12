@@ -3,6 +3,7 @@ import { boards } from '../config/site.js';
 import { pageTitle } from '../components/layout.js';
 import { call } from '../services/community.js';
 import { required } from '../lib/validation.js';
+import { icon } from '../components/icons.js';
 export function postCard(p) {
   const b = boards.find((b) => b.id === p.board_id);
   return el(
@@ -19,8 +20,33 @@ export function postCard(p) {
     el(
       'div',
       { class: 'post-meta' },
-      el('span', {}, p.author),
-      el('span', {}, `♡ ${p.likes}　◌ ${p.comments}　◉ ${p.views}`),
+      el(
+        'span',
+        { class: 'post-author' },
+        el(
+          'span',
+          { class: 'mini-avatar', 'aria-hidden': 'true' },
+          p.anonymous ? '익' : p.author.slice(0, 1),
+        ),
+        p.author,
+      ),
+      el(
+        'span',
+        { class: 'post-metrics' },
+        ...[
+          ['heart', '공감', p.likes],
+          ['chat', '댓글', p.comments],
+          ['eye', '조회', p.views],
+        ].map(([name, label, value]) =>
+          el(
+            'span',
+            { class: 'metric' },
+            icon(name, 14),
+            el('span', { class: 'sr-only' }, label + ' '),
+            value,
+          ),
+        ),
+      ),
     ),
   );
 }
@@ -550,7 +576,19 @@ export async function writePage(params, state) {
   form.querySelector('[name=body]').value = source.body || '';
   form.querySelector('[name=options]').value = Array.isArray(source.options)
     ? source.options.join('\n')
-    : source.options || '';
+    : source.options || p?.poll?.options?.map((option) => option.label).join('\n') || '';
+  const boardSelect = form.querySelector('[name=board]');
+  const updateBoardFields = () => {
+    const options = form.querySelector('[name=options]');
+    const isPoll = boardSelect.value === 'polls';
+    options.closest('.field').hidden = !isPoll;
+    options.disabled = !isPoll || Boolean(id);
+    const anonymous = form.querySelector('[name=anonymous]');
+    anonymous.disabled = Boolean(id) || boardSelect.value === 'anonymous';
+    if (boardSelect.value === 'anonymous') anonymous.checked = true;
+  };
+  boardSelect.addEventListener('change', updateBoardFields);
+  updateBoardFields();
   return el(
     'section',
     {},

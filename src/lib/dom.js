@@ -25,14 +25,37 @@ export function toast(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => node.classList.remove('visible'), 5000);
 }
+let fieldSequence = 0;
 export function field(label, name, type = 'text', options = {}) {
+  const id = options.id || `${name}-${++fieldSequence}`;
   const input = el(type === 'textarea' ? 'textarea' : 'input', {
     name,
-    id: name,
+    id,
     type: type === 'textarea' ? null : type,
     ...options,
   });
-  return el('label', { class: 'field', for: name }, el('span', {}, label), input);
+  let control = input;
+  if (type === 'password') {
+    const toggle = el(
+      'button',
+      {
+        type: 'button',
+        class: 'password-toggle',
+        'aria-label': `${label} 표시`,
+        'aria-pressed': 'false',
+        onClick: () => {
+          const visible = input.type === 'password';
+          input.type = visible ? 'text' : 'password';
+          toggle.textContent = visible ? '숨기기' : '보기';
+          toggle.setAttribute('aria-label', `${label} ${visible ? '숨기기' : '표시'}`);
+          toggle.setAttribute('aria-pressed', String(visible));
+        },
+      },
+      '보기',
+    );
+    control = el('div', { class: 'password-control' }, input, toggle);
+  }
+  return el('div', { class: 'field' }, el('label', { for: id }, label), control);
 }
 export function empty(title, description, action) {
   return el(
