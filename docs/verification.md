@@ -13,7 +13,7 @@
 
 실제 서버 시나리오는 임시 계정을 생성해 자동로그인 선택 시 브라우저 컨텍스트 재생성 후 프로필 진입을 확인하고, 해제 시 같은 탭 새로고침은 유지되지만 새 컨텍스트에서는 로그인 안내를 확인했습니다. 실제 잘못된 비밀번호로 탈퇴가 거절되고 올바른 비밀번호로 삭제된 뒤 로그인에 실패함을 확인했습니다. 실제 QA 계정 잔여 0건을 원격 SQL로 확인했습니다. 실제 사용자 계정은 변경하지 않았습니다. 새 DB 마이그레이션/Edge 변경은 없습니다.
 
-브라우저 캡처: screenshots/login-options-mobile.png, account-delete-mobile.png. 공개 배포 SHA·자산 및 배포 후 검사 결과는 progress.md에 기록합니다.
+브라우저 캡처: screenshots/login-options-mobile.png, account-delete-mobile.png. 코드 5a177ac의 CI/Pages 배포 성공, 실제 배포 SHA·JS/CSS 200/MIME을 확인했습니다. 같은 실제 계정 시나리오를 공개 사이트에서도 별도 재실행해 통과했고 QA 계정 삭제를 확인했습니다. 로컬/배포 환경의 동일 시나리오를 중복 합산하지 않았습니다. workflow 링크와 배포 결과는 progress.md에 기록했습니다.
 
 ## 이전 게시판·문의 관리 검증
 
