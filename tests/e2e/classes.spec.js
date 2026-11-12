@@ -195,3 +195,19 @@ test('개인정보 안내 준비 중에는 가입을 막고 공개 처리방침�
   await expect(contact).toHaveAttribute('href', 'https://codexora-dev.github.io/SPContact');
   await expect(contact).toHaveAttribute('rel', 'noopener noreferrer');
 });
+test('열린 화면에서 정책이 바뀌면 재시도 후 최신 소속·동의 등록으로 안내한다', async ({ page }) => {
+  const state = await session(page, false, true);
+  await page.route('**/rest/v1/rpc/community', (route) => {
+    if (route.request().postDataJSON().p_action !== 'assessments') return route.fallback();
+    state.enrollment_current = false;
+    return route.fulfill({ status: 400, json: { code: 'P0001', message: 'CONSENT_REQUIRED' } });
+  });
+  await page.goto('/#/assessments');
+  await expect(page.getByRole('alert')).toContainText('최신 개인정보 안내');
+  await page.getByRole('button', { name: '다시 시도', exact: true }).click();
+  await page.getByRole('link', { name: '소속·동의 등록', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: '소속과 개인정보 동의', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByLabel('학년', { exact: true })).toBeDisabled();
+});

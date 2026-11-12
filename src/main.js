@@ -148,7 +148,11 @@ async function render() {
         await refresh();
         await render();
       });
-    else if (route === '/admin' && state.me?.is_admin) page = await adminPage(params, render);
+    else if (route === '/admin' && state.me?.is_admin)
+      page = await adminPage(params, async () => {
+        await refresh();
+        await render();
+      });
     else if (route === '/feedback' && state.user && state.me?.profile)
       page = await feedbackPage(params, render);
     else if (route === '/guide')
@@ -275,7 +279,13 @@ async function render() {
       void showSitePopups();
     }
   } catch (err) {
-    if (current === renderId) main.replaceChildren(errorBox(err.message, render));
+    if (current === renderId)
+      main.replaceChildren(
+        errorBox(err.message, async () => {
+          await refresh();
+          await render();
+        }),
+      );
   }
 }
 window.addEventListener('hashchange', async () => {
