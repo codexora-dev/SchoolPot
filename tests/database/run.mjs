@@ -1,6 +1,7 @@
 import { PGlite } from '@electric-sql/pglite';
 import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import { classTests } from './classes.mjs';
 const db = new PGlite();
 let passed = 0;
 const users = {
@@ -49,6 +50,19 @@ await db.exec(
     'utf8',
   ),
 );
+await db.exec(
+  await readFile(
+    new URL(
+      '../../supabase/migrations/20261112125917_class_memberships_privacy.sql',
+      import.meta.url,
+    ),
+    'utf8',
+  ),
+);
+// Every regression case uses the final schema; these settings are fixtures only.
+await db.exec(
+  "update private.class_settings set counts=array[2,3,1];update private.privacy_policy set is_ready=true,overseas_notice='Test fixture only; never publish as an operating policy.'",
+);
 for (const [name, id] of Object.entries(users))
   await db.query(
     'insert into auth.users(id,email_confirmed_at,deleted_at,is_anonymous,email,raw_app_meta_data) values($1,$2,null,$3,$4,$5)',
@@ -61,6 +75,11 @@ for (const [name, id] of Object.entries(users))
     ],
   );
 await db.query('insert into auth.sessions select id,id from auth.users');
+for (const who of ['a', 'b', 'admin'])
+  await db.query(
+    'insert into private.memberships(user_id,school_year,grade,class_number,policy_version) select $1,school_year,1,1,1 from private.class_settings',
+    [users[who]],
+  );
 async function as(who, role = 'authenticated') {
   await db.exec('reset role');
   await db.query("select set_config('request.jwt.claim.sub',$1,false)", [users[who] || '']);
@@ -331,7 +350,7 @@ await ok('수행평가 등록, 타인 수정 차단, 수정 요청', async () =>
         due_date: '2026-11-11',
         subject: '국어',
       }),
-    /FORBIDDEN/,
+    /FORBIDDEN|NOT_FOUND/,
   );
   await call('report_assessment', { id: assessment, reason: '날짜를 확인해 주세요' });
 });
@@ -798,15 +817,31 @@ await ok('신규 관리 API도 이용 제한·현재 세션을 검증', async ()
   await db.exec('reset role');
   await db.query('insert into auth.sessions values($1,$1)', [users.b]);
 });
-await ok('탈퇴 후 작성자 연결 제거, 기존 JWT 접근 차단', async () => {
+await db.exec('reset role');
+await db.exec(
+  "delete from private.memberships;update private.class_settings set counts=array[0,0,0],revision=1;update private.privacy_policy set is_ready=false,version=1,overseas_notice=''",
+);
+await classTests({ db, as, call, ok, denied, users });
+await ok('탈퇴 시 작성 내용·소속·동의 삭제, 기존 JWT 접근 차단', async () => {
   await db.exec('reset role');
   await db.query('delete from auth.users where id=$1', [users.a]);
   await as('a');
   await denied(() => call('me'), /AUTH_REQUIRED/);
-  await as('b');
-  const p = await call('get_post', { id: anonPost });
-  assert.equal(p.author, '익명');
-  assert.equal(JSON.stringify(p).includes(users.a), false);
+  await db.exec('reset role');
+  assert.equal(
+    (await db.query('select count(*) n from private.posts where id=$1', [anonPost])).rows[0].n,
+    0,
+  );
+  assert.equal(
+    (await db.query('select count(*) n from private.memberships where user_id=$1', [users.a]))
+      .rows[0].n,
+    0,
+  );
+  assert.equal(
+    (await db.query('select count(*) n from private.feedback where author_id=$1', [users.a]))
+      .rows[0].n,
+    0,
+  );
 });
 await db.close();
 console.log(

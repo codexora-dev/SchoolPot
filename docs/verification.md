@@ -1,4 +1,25 @@
-# 검증 결과 · 2026-11-12 자동로그인·회원탈퇴
+# 검증 결과 · 2026-11-12 반별 수행평가·개인정보
+
+| 최신 검사                                             | 통과 |
+| ----------------------------------------------------- | ---: |
+| Vitest 입력·정적 보안·인증 저장소                     |   23 |
+| PGlite 최종 스키마 기준 권한·반 격리·동의·삭제        |   77 |
+| Playwright fixture·가입·학급 설정·기존 회원·반별 화면 |   43 |
+| Deno HTTP 보호 및 가입 처리 순서·실패 정리            |   11 |
+| 실제 Auth/PostgREST/Edge 준비 상태·권한 검증          |    5 |
+| 실제 DB 현재 세션·authenticated 역할 롤백 assertion   |    8 |
+
+167개 검사/assertion을 통과했다. lint/build 및 accounts Edge Deno check도 통과했다. 로컬 DB 검사는 전체 최신 마이그레이션을 먼저 적용해 기존 회귀 사례까지 실행한다. 기본 E2E의 실제 계정 테스트 2개는 건너뛰며, 별도 활성화 시에도 실제 반 수·정책 준비 전 새 가입 전체 흐름을 실행하지 않는다.
+
+실제 API는 공개 설정의 소속 비노출, 미등록 소속의 일정 거절, 관리자 설정/정정 권한 차단, 정책 미준비에서 소속/동의 거절, 가입 서버의 Auth 생성 전 거절을 확인했다. 긍정적인 반별 쓰기·읽기·타 반 격리는 실제 임시 계정의 세션 식별자와 DB authenticated 역할을 사용한 롤백 트랜잭션으로 별도 확인했다. 실제 방문자에게 테스트 정책이나 반/일정을 공개하지 않았다.
+
+실제 DB 확인: 테스트 계정 0, 소속 0, 기존 일정 1건 유지, 반 수 [0,0,0], 정책 준비 상태, private 29개 테이블 RLS 활성화. 실제 신규 가입→소속 저장→UI 전체 긍정 흐름은 운영 설정 미준비로 검증하지 않았으며 로컬 fixture·롤백 검사를 대체 증거로 표시하지 않는다. 운영자 설정 후 account-live.spec.js로 실행할 수 있다.
+
+화면 캡처: screenshots/signup-class-mobile.png, admin-class-settings.png. 제공된 외부 개인정보 문의 주소는 HTTP 404였다. [아동 동의](https://www.law.go.kr/LSW/lsLinkCommonInfo.do?chrClsCd=010202&lsJoLnkSeq=1020398523)와 [국외 이전 고지](https://law.go.kr/lsLinkCommonInfo.do?lsJoLnkSeq=1033215841)를 확인했으며 법적 운영 보증으로 표시하지 않는다. 운영 준비와 제한은 classes-privacy.md를 참고한다.
+
+최신 Security Advisor는 의도적인 [기본 거부 RLS INFO](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) 29건과 기존 [유출 비밀번호 보호 비활성 WARN](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) 1건이다. 공개 배포 결과는 progress.md에 기록한다.
+
+## 이전 자동로그인·회원탈퇴 검증
 
 | 최신 검사                                 | 통과 |
 | ----------------------------------------- | ---: |

@@ -57,6 +57,7 @@ export function layout(state, onTheme, onLogout) {
       'div',
       { class: 'sidebar-bottom' },
       link('커뮤니티 이용 안내', '#/guide'),
+      link('개인정보 처리방침·문의', '#/privacy'),
       el('small', {}, '© 스쿨팟 · 함께 만드는 학교생활'),
     ),
   );

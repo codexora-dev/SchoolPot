@@ -13,6 +13,7 @@ import { notificationsPage, noticesPage, neisPage, assessmentsPage } from './pag
 import { adminPage } from './pages/admin.js';
 import { icon } from './components/icons.js';
 import { showSitePopups } from './components/site-popups.js';
+import { enrollmentPage, privacyPage } from './pages/enrollment.js';
 let storedTheme;
 try {
   storedTheme = localStorage.getItem('schoolpot-theme');
@@ -99,6 +100,12 @@ function gate() {
       '다른 친구들에게 보여줄 닉네임과 학년을 설정할 수 있어요.',
       link('프로필 설정', '#/profile', 'button primary'),
     );
+  if (state.me?.enrollment_current !== true)
+    return empty(
+      '본인 소속과 동의를 확인해 주세요',
+      '학년·반 및 개인정보 동의를 등록한 뒤 이용할 수 있어요.',
+      link('소속·동의 등록', '#/enrollment', 'button primary'),
+    );
   return null;
 }
 async function render() {
@@ -130,12 +137,21 @@ async function render() {
   );
   try {
     let page;
-    const publicRoutes = ['/', '/login', '/signup', '/reset', '/guide', '/boards'];
+    const publicRoutes = ['/', '/login', '/signup', '/reset', '/guide', '/boards', '/privacy'];
     if (route === '/') page = await homePage(state);
     else if (['/login', '/signup', '/reset', '/password'].includes(route)) {
       if (route === '/password' && !state.user) page = gate();
-      else page = authPage(route.slice(1), refresh);
-    } else if (route === '/guide')
+      else page = await authPage(route.slice(1), refresh);
+    } else if (route === '/privacy') page = await privacyPage();
+    else if (route === '/enrollment' && state.user)
+      page = await enrollmentPage(state, async () => {
+        await refresh();
+        await render();
+      });
+    else if (route === '/admin' && state.me?.is_admin) page = await adminPage(params, render);
+    else if (route === '/feedback' && state.user && state.me?.profile)
+      page = await feedbackPage(params, render);
+    else if (route === '/guide')
       page = el(
         'section',
         {},
@@ -151,7 +167,7 @@ async function render() {
           el(
             'p',
             {},
-            '아이디와 8자 이상 비밀번호로 가입해 이용할 수 있어요. 이메일 인증은 없습니다. 재학생 인증 신청은 받지 않으며, 실제 재학생 여부를 확인하지 않습니다.',
+            '만 14세 이상인 분이 아이디·8자 이상 비밀번호·본인 학년과 반을 입력하고 필수 동의 후 가입할 수 있어요. 이메일 인증이나 재학생 인증 신청은 받지 않으며, 연령·소속은 본인 신고에 따릅니다.',
           ),
           el('h2', {}, '안전한 커뮤니티'),
           el(
@@ -163,8 +179,9 @@ async function render() {
           el(
             'p',
             {},
-            '실제 이메일, 학생증, 학번은 받지 않아요. 프로필에서 닉네임과 선택 학년을 변경할 수 있습니다. 탈퇴 후에도 게시글과 댓글 본문은 남으므로 지우고 싶은 내용은 탈퇴 전에 직접 삭제해 주세요. 이 이용 안내는 별도의 개인정보 처리방침을 대신하지 않습니다.',
+            '실제 이메일, 학생증, 학번, 생년월일은 받지 않아요. 닉네임은 프로필에서 바꿀 수 있고 소속 정정은 관리자에게 요청합니다. 수행평가는 등록된 본인 반에만 공유합니다. 탈퇴하면 소속·동의와 계정에 연결된 작성 내용도 삭제합니다.',
           ),
+          link('개인정보 처리방침·외부 문의', '#/privacy', 'button secondary'),
           el('h2', {}, '계정과 복구 코드'),
           el(
             'p',

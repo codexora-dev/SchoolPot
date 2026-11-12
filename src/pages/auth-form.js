@@ -3,10 +3,13 @@ import { auth, client, authStorage } from '../services/api.js';
 import { register, recover, signIn } from '../services/accounts.js';
 import { password } from '../lib/validation.js';
 import { icon } from '../components/icons.js';
-export function authPage(mode, refresh) {
+import { getSchoolSetup } from '../services/school-membership.js';
+import { enrollmentFields, enrollmentPayload } from '../components/enrollment.js';
+export async function authPage(mode, refresh) {
   const signup = mode === 'signup',
     reset = mode === 'reset',
     update = mode === 'password';
+  const setup = signup ? await getSchoolSetup() : null;
   const title = signup
     ? '우리 학교 이야기, 함께해요'
     : reset
@@ -47,7 +50,11 @@ export function authPage(mode, refresh) {
         try {
           const values = Object.fromEntries(new FormData(form));
           if (signup) {
-            const result = await register(values.username, values.password);
+            const result = await register(
+              values.username,
+              values.password,
+              enrollmentPayload(form, setup),
+            );
             form.reset();
             showRecovery(result.recovery_code, '가입이 완료되었어요');
           } else if (reset) {
@@ -86,7 +93,7 @@ export function authPage(mode, refresh) {
       'p',
       { class: 'muted' },
       signup
-        ? '아이디와 비밀번호만으로 시작하세요. 이메일 인증은 없어요.'
+        ? '아이디·비밀번호와 본인 학년·반을 입력해 주세요. 이메일 인증은 없어요.'
         : reset
           ? '가입할 때 보관한 복구 코드를 입력해 주세요.'
           : '학교의 작은 순간들을 스쿨팟에서 만나보세요.',
@@ -129,6 +136,7 @@ export function authPage(mode, refresh) {
           '대소문자를 구분하지 않는 아이디예요. 실명·학번은 사용하지 마세요. 재학생 여부는 확인하지 않습니다.',
         )
       : null,
+    signup ? enrollmentFields(setup) : null,
     !signup && !reset && !update
       ? el(
           'div',
@@ -152,7 +160,11 @@ export function authPage(mode, refresh) {
       : null,
     el(
       'button',
-      { type: 'submit', class: 'button primary' },
+      {
+        type: 'submit',
+        class: 'button primary',
+        disabled: signup && (!setup.policy.is_ready || !setup.counts.some(Boolean)),
+      },
       signup ? '회원가입' : reset ? '비밀번호 재설정' : update ? '비밀번호 변경' : '로그인',
     ),
     status,

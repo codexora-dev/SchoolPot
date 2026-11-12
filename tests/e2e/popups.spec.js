@@ -1,3 +1,4 @@
+import { enrolled } from './school.js';
 import { test, expect } from './test.js';
 const id = '77777777-7777-4777-8777-777777777777';
 const popup = {
@@ -117,7 +118,11 @@ async function admin(page) {
     route.fulfill({
       json:
         route.request().postDataJSON().p_action === 'me'
-          ? { profile: { nickname: '관리자', notifications_enabled: true }, is_admin: true }
+          ? {
+              profile: { nickname: '관리자', notifications_enabled: true },
+              ...enrolled,
+              is_admin: true,
+            }
           : {},
     }),
   );

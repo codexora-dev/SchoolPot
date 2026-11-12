@@ -1,5 +1,6 @@
 import { test, expect } from './test.js';
 import { randomBytes } from 'node:crypto';
+import { agreeSignup } from './school.js';
 test.skip(
   process.env.SCHOOLPOT_LIVE_TEST !== '1',
   'Actual accounts are created only by an explicitly enabled live test.',
@@ -12,8 +13,17 @@ test('실제 화면에서 가입·로그인·글쓰기·급식·탈퇴', async (
     postId;
   try {
     await page.goto('/#/signup');
+    await expect(page.getByRole('button', { name: '회원가입', exact: true })).toBeVisible();
+    test.skip(
+      await page.getByRole('button', { name: '회원가입', exact: true }).isDisabled(),
+      '운영자가 실제 반 수·개인정보 안내를 준비한 뒤 실행합니다.',
+    );
     await page.getByLabel('아이디', { exact: true }).fill(username);
     await page.getByLabel('비밀번호', { exact: true }).fill(password);
+    await agreeSignup(
+      page,
+      await page.getByLabel('학년', { exact: true }).locator('option').nth(1).getAttribute('value'),
+    );
     await page.getByRole('button', { name: '회원가입', exact: true }).click();
     await expect(page.getByRole('heading', { name: '가입이 완료되었어요' })).toBeVisible({
       timeout: 20000,

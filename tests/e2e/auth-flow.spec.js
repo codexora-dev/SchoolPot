@@ -1,4 +1,5 @@
 import { test, expect } from './test.js';
+import { agreeSignup } from './school.js';
 test('가입 성공 시 복구 코드를 한 번 표시하고 이메일 인증을 요구하지 않는다', async ({ page }) => {
   await page.route('**/functions/v1/accounts', async (route) => {
     if (route.request().method() === 'OPTIONS')
@@ -20,6 +21,7 @@ test('가입 성공 시 복구 코드를 한 번 표시하고 이메일 인증�
   await page.goto('/#/signup');
   await page.getByLabel('아이디', { exact: true }).fill('SchoolFriend');
   await page.getByLabel('비밀번호', { exact: true }).fill('eight888');
+  await agreeSignup(page);
   await page.getByRole('button', { name: '회원가입', exact: true }).click();
   await expect(page.getByRole('heading', { name: '가입이 완료되었어요' })).toBeVisible();
   await expect(page.locator('.recovery-code')).toHaveText(Array(8).fill('aaaaaaaa').join('-'));

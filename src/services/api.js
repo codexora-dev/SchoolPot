@@ -3,6 +3,18 @@ import { safePublicKey } from '../lib/validation.js';
 import { createAuthStorage } from '../lib/auth-storage.js';
 const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+const schoolErrors = {
+  POLICY_NOT_READY: '운영자가 개인정보 안내와 문의 경로를 준비하고 있어요.',
+  AGE_REQUIRED: '만 14세 이상인 경우에만 가입할 수 있어요.',
+  CONSENT_REQUIRED: '최신 개인정보 안내를 확인하고 필수 동의해 주세요.',
+  STALE_POLICY: '개인정보 안내가 변경됐어요. 새로고침한 뒤 다시 확인해 주세요.',
+  STALE_CLASS_SETTINGS: '학급 설정이 변경됐어요. 새로고침한 뒤 다시 선택해 주세요.',
+  CLASS_INVALID: '운영 중인 학년·반을 선택해 주세요.',
+  MEMBERSHIP_REQUIRED: '본인 학년·반과 필수 동의를 등록해 주세요.',
+  MEMBERSHIP_LOCKED: '소속 변경은 관리자에게 정정을 요청해 주세요.',
+  STALE_MEMBERSHIP: '소속 정보가 변경됐어요. 목록을 다시 불러와 주세요.',
+  CLASS_IN_USE: '소속 회원이 있는 반은 없앨 수 없어요. 먼저 소속을 정정해 주세요.',
+};
 export const configured = Boolean(url && key && safePublicKey(key));
 export const authStorage = createAuthStorage({
   key: url ? `sb-${new URL(url).hostname.split('.')[0]}-auth-token` : 'schoolpot-auth',
@@ -32,6 +44,7 @@ export async function rpc(name, payload = {}) {
 }
 export function friendlyError(error) {
   const messages = {
+    ...schoolErrors,
     AUTH_REQUIRED: '로그인이 필요해요.',
     ACCOUNT_REQUIRED: '아이디 계정으로 다시 로그인해 주세요.',
     FORBIDDEN: '이 작업을 할 권한이 없어요.',
@@ -71,6 +84,7 @@ export async function edge(name, payload) {
       /* not every error has a response */
     }
     const messages = {
+      ...schoolErrors,
       ACCOUNT_EXISTS: '이미 사용 중인 아이디예요.',
       INVALID_INPUT: '아이디와 비밀번호 입력 조건을 확인해 주세요.',
       RECOVERY_FAILED: '아이디 또는 복구 코드가 올바르지 않아요.',

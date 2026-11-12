@@ -16,7 +16,7 @@ test('회원가입은 이메일 없이 아이디와 8자리 이상 비밀번호�
   await expect(page.getByLabel('닉네임', { exact: true })).toHaveCount(0);
   await expect(page.getByLabel('비밀번호', { exact: true })).toHaveAttribute('minlength', '8');
   await expect(
-    page.getByText('아이디와 비밀번호만으로 시작하세요. 이메일 인증은 없어요.'),
+    page.getByText('아이디·비밀번호와 본인 학년·반을 입력해 주세요. 이메일 인증은 없어요.'),
   ).toBeVisible();
 });
 test('비로그인 글쓰기·관리자 접근 차단', async ({ page }) => {

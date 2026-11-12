@@ -18,7 +18,6 @@ export function profilePage(state, refresh, params = new URLSearchParams()) {
         try {
           await call('save_profile', {
             nickname: nickname(data.nickname),
-            grade: data.grade,
             notifications_enabled: Boolean(data.notifications_enabled),
           });
           await refresh();
@@ -36,15 +35,24 @@ export function profilePage(state, refresh, params = new URLSearchParams()) {
       maxlength: 20,
     }),
     el(
-      'label',
-      { class: 'field' },
-      el('span', {}, '학년 (선택)'),
+      'div',
+      { class: 'panel' },
+      el('strong', {}, '내 소속'),
+      state.me?.membership
+        ? el(
+            'p',
+            {},
+            `${state.me.membership.school_year}학년도 ${state.me.membership.grade}학년 ${state.me.membership.class_number}반`,
+          )
+        : el('p', {}, '소속을 등록해 주세요.'),
       el(
-        'select',
-        { name: 'grade' },
-        el('option', { value: '' }, '선택 안 함'),
-        ...[1, 2, 3].map((n) => el('option', { value: n, selected: p?.grade === n }, `${n}학년`)),
+        'p',
+        { class: 'hint' },
+        '학년·반을 임의 변경할 수 없어요. 잘못 등록했으면 관리자에게 정정을 요청해 주세요.',
       ),
+      state.me?.enrollment_current !== true
+        ? link('소속·동의 등록', '#/enrollment', 'button secondary')
+        : null,
     ),
     el(
       'label',
@@ -76,7 +84,7 @@ export function profilePage(state, refresh, params = new URLSearchParams()) {
       el(
         'p',
         { class: 'muted' },
-        '회원탈퇴 시 계정과 프로필, 로그인 세션이 삭제됩니다. 게시글·댓글·문의 본문은 계정 연결 없이 남아요. 지우고 싶은 게시글과 댓글은 탈퇴 전에 삭제해 주세요.',
+        '회원탈퇴 시 계정·프로필·소속·동의·로그인 세션과 계정에 연결된 작성 내용을 삭제합니다. 본인 게시글에 달린 답글도 함께 삭제될 수 있으며 되돌릴 수 없어요.',
       ),
       button('회원 탈퇴', () => deleteAccountDialog(state, refresh), 'button danger'),
     ),

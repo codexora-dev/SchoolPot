@@ -163,8 +163,15 @@ export async function neisPage(kind, params) {
   );
 }
 export async function assessmentsPage(params, state, reload) {
-  const grade = params.get('grade') || '';
-  const items = await call('assessments', { grade });
+  const membership = state.me?.membership;
+  if (!membership || state.me?.enrollment_current !== true)
+    return empty(
+      '소속을 등록해 주세요',
+      '본인 학년·반의 일정만 확인할 수 있어요.',
+      link('소속·동의 등록', '#/enrollment', 'button primary'),
+    );
+  const items = await call('assessments');
+  const unassigned = await call('assessments_unassigned');
   const openEditor = (item = {}) => {
     const dialog = el(
       'dialog',
@@ -200,20 +207,9 @@ export async function assessmentsPage(params, state, reload) {
           value: item.subject || '',
         }),
         el(
-          'label',
-          { class: 'field' },
-          el('span', {}, '학년'),
-          el(
-            'select',
-            { name: 'grade' },
-            ...[1, 2, 3].map((n) =>
-              el(
-                'option',
-                { value: n, selected: n === (item.grade || state.me?.profile?.grade || 1) },
-                `${n}학년`,
-              ),
-            ),
-          ),
+          'p',
+          { class: 'hint' },
+          `${membership.school_year}학년도 ${membership.grade}학년 ${membership.class_number}반에만 공유합니다.`,
         ),
         field('날짜', 'due_date', 'date', { required: true, value: item.due_date || localDate() }),
         field('메모', 'body', 'textarea', { maxlength: 2000, rows: 3 }),
@@ -240,7 +236,7 @@ export async function assessmentsPage(params, state, reload) {
         el(
           'article',
           { class: 'panel assessment' },
-          el('span', { class: 'board-chip' }, a.grade + '학년 · ' + a.subject),
+          el('span', { class: 'board-chip' }, `${a.grade}학년 ${a.class_number}반 · ${a.subject}`),
           el('h3', {}, a.title),
           el('p', { class: 'preserve muted' }, a.body),
           el(
@@ -286,20 +282,8 @@ export async function assessmentsPage(params, state, reload) {
     pageTitle(
       'STUDY PLANNER',
       '수행평가 캘린더',
-      '친구들과 함께 챙기는 우리 학년의 일정',
+      `${membership.school_year}학년도 ${membership.grade}학년 ${membership.class_number}반의 일정만 표시합니다.`,
       button('＋ 일정 등록', () => openEditor(), 'button primary'),
-    ),
-    el(
-      'div',
-      { class: 'tabs' },
-      link('전체 학년', '#/assessments', 'tab ' + (!grade ? 'selected' : '')),
-      ...[1, 2, 3].map((n) =>
-        link(
-          n + '학년',
-          '#/assessments?grade=' + n,
-          'tab ' + (grade === String(n) ? 'selected' : ''),
-        ),
-      ),
     ),
     el(
       'p',
@@ -317,5 +301,37 @@ export async function assessmentsPage(params, state, reload) {
             button('일정 등록', () => openEditor(), 'button primary'),
           ),
         ),
+    unassigned.length
+      ? el(
+          'section',
+          { class: 'panel' },
+          el('h2', {}, '내 이전 일정 이관'),
+          el(
+            'p',
+            { class: 'hint' },
+            '반 구분 도입 전에 본인이 작성한 일정입니다. 다른 반에는 공개하지 않습니다. 내용을 확인한 뒤 본인 반으로 이관하거나 삭제할 수 있어요.',
+          ),
+          ...unassigned.map((a) =>
+            el(
+              'article',
+              { class: 'audit-row' },
+              el('div', {}, el('strong', {}, a.title), el('p', { class: 'preserve' }, a.body)),
+              button('내 반으로 이관', () => openEditor(a), 'button secondary'),
+              button(
+                '이전 일정 삭제',
+                async () => {
+                  try {
+                    await call('delete_assessment', { id: a.id });
+                    await reload();
+                  } catch (err) {
+                    toast(err.message);
+                  }
+                },
+                'button danger',
+              ),
+            ),
+          ),
+        )
+      : null,
   );
 }

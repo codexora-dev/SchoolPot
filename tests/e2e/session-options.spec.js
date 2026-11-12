@@ -1,3 +1,4 @@
+import { enrolled, schoolSetup } from './school.js';
 import { test, expect } from './test.js';
 import { boards } from './boards.js';
 const id = '99999999-9999-4999-8999-999999999999';
@@ -9,6 +10,7 @@ const user = {
   user_metadata: {},
 };
 async function mock(context) {
+  await context.route('**/rest/v1/rpc/school_setup', (r) => r.fulfill({ json: schoolSetup }));
   await context.route('**/rest/v1/rpc/site_popups', (r) => r.fulfill({ json: [] }));
   await context.route('**/rest/v1/rpc/board_catalog', (r) => r.fulfill({ json: boards }));
   await context.route('**/auth/v1/user', (r) => r.fulfill({ json: user }));
@@ -31,6 +33,7 @@ async function mock(context) {
         r.request().postDataJSON().p_action === 'me'
           ? {
               profile: { nickname: '자동로그인친구', notifications_enabled: true },
+              ...enrolled,
               is_admin: false,
             }
           : [],

@@ -4,9 +4,12 @@ import { call } from '../services/community.js';
 import { boardManager } from './admin-boards.js';
 import { feedbackManager } from './feedback.js';
 import { popupManager } from './admin-popups.js';
+import { classManager, privacyManager } from './admin-classes.js';
 export async function adminPage(params, reload) {
   const tab = params.get('tab') || 'overview';
   const main = el('div');
+  if (tab === 'classes') main.append(await classManager(params, reload));
+  if (tab === 'privacy') main.append(await privacyManager(reload));
   if (tab === 'boards') main.append(await boardManager(reload));
   if (tab === 'feedback') main.append(await feedbackManager(params, reload));
   if (tab === 'popups') main.append(await popupManager(reload));
@@ -207,6 +210,8 @@ export async function adminPage(params, reload) {
       { class: 'tabs' },
       ...Object.entries({
         overview: '현황',
+        classes: '학급·소속 관리',
+        privacy: '개인정보 설정',
         boards: '게시판 관리',
         feedback: '건의·오류 관리',
         members: '회원 관리',

@@ -1,3 +1,4 @@
+import { enrolled } from './school.js';
 import { test, expect } from './test.js';
 import { boards } from './boards.js';
 const id = '88888888-8888-4888-8888-888888888888';
@@ -27,7 +28,11 @@ async function member(page, admin = false) {
     route.fulfill({
       json:
         route.request().postDataJSON().p_action === 'me'
-          ? { profile: { nickname: '테스트친구', notifications_enabled: true }, is_admin: admin }
+          ? {
+              profile: { nickname: '테스트친구', notifications_enabled: true },
+              ...enrolled,
+              is_admin: admin,
+            }
           : [],
     }),
   );

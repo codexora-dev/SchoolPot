@@ -5,7 +5,7 @@ import { call } from '../services/community.js';
 import { postCard } from './community.js';
 import { icon as uiIcon } from '../components/icons.js';
 export async function homePage(state) {
-  const enabled = state.user && state.me?.profile;
+  const enabled = state.user && state.me?.profile && state.me?.enrollment_current === true;
   let posts = [],
     popular = [],
     notices = [];

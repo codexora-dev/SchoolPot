@@ -36,7 +36,15 @@ Cloudflare/Vercel용 CSP·frame-ancestors·nosniff·HSTS·권한 제한을 제�
 
 ## 결과
 
-실제 서버와 브라우저 검증을 포함한 결과는 verification.md를 참고하세요. 최신 Security Advisor에는 기본 거부 RLS의 no policy INFO 25건과 Auth 유출 비밀번호 보호 비활성 WARN 1건이 있습니다. [해당 Advisor 설명](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)을 참고하되 불필요한 허용 정책을 추가하지 마세요.
+실제 서버와 브라우저 검증을 포함한 결과는 verification.md를 참고하세요. 최신 Security Advisor에는 기본 거부 RLS의 no policy INFO 29건과 Auth 유출 비밀번호 보호 비활성 WARN 1건이 있습니다. [해당 Advisor 설명](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)을 참고하되 불필요한 허용 정책을 추가하지 마세요.
+
+## 반별 수행평가·소속과 동의
+
+소속은 private.memberships에 저장하고 auth.uid()와 현재 학년도·정책 버전으로 확인합니다. 요청의 학년·반을 권한에 사용하지 않으며 일반 회원의 같은 학년도 소속 변경과 프로필 필드를 통한 우회를 금지합니다. 관리자도 다른 반 수행평가 본문·수정 요청은 조회/처리할 수 없습니다. 소속 정정은 관리자만 수행하고 이전/이후 값과 사유를 감사 기록에 남깁니다.
+
+school_setup의 공개 예외는 반 수·학년도·현재 정책 전문뿐입니다. 실제 동의 전문은 서버 버전별 스냅샷에 보관합니다. 가입 Edge가 Auth 생성 전에 연령 본인 확인·필수 동의·문서 버전·학급 범위를 검증하고 소속 기록 실패 시 부분 생성 계정을 삭제합니다. 신규 가입·기존 회원 등록은 실제 정책 준비 전 거절합니다. 14세 체크는 자기 신고이며 신원·연령·재학생을 입증하지 않습니다.
+
+최신 보유 결정에 따라 Auth 사용자 삭제 전 계정 연결 작성 내용·소속·동의를 삭제합니다. 기존 본문 보존 정책보다 우선하며 본인 게시글의 타인 답글도 삭제될 수 있습니다. 외부 로그·백업·보안 카운터까지 탈퇴 즉시 모두 삭제됐다고 주장하지 않습니다. 실제 문의 경로와 위탁·국외 처리 등 남은 운영 검토는 classes-privacy.md를 따릅니다.
 
 ## 사이트 진입 팝업
 

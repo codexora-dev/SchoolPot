@@ -1,3 +1,4 @@
+import { enrolled } from './school.js';
 import { test, expect } from './test.js';
 for (const width of [320, 390, 768, 1024, 1440])
   test(`주요 화면은 ${width}px에서 가로 넘침 없이 표시`, async ({ page }) => {
@@ -86,6 +87,7 @@ async function member(page) {
                 grade: 1,
                 notifications_enabled: true,
               },
+              ...enrolled,
               is_admin: false,
             }
           : [],

@@ -1,3 +1,4 @@
+import { enrolled } from './school.js';
 import { test, expect } from './test.js';
 const id = '11111111-1111-4111-8111-111111111111';
 const postId = '22222222-2222-4222-8222-222222222222';
@@ -61,6 +62,7 @@ async function setup(page, isAdmin = false) {
       if (p_action === 'me')
         data = {
           profile: { nickname: '테스트친구', grade: 1, notifications_enabled: true },
+          ...enrolled,
           is_admin: isAdmin,
         };
       else if (p_action === 'list_posts') data = [post];

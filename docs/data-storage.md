@@ -1,16 +1,19 @@
 # 게시글은 어디에 저장되나요?
 
-프로젝트 hlglstdtgcodblynicmh의 PostgreSQL에 영구 저장됩니다. 기본 public 스키마에는 커뮤니티 테이블을 만들지 않았습니다. 데이터 테이블 24개는 private 스키마에 있습니다.
+프로젝트 hlglstdtgcodblynicmh의 PostgreSQL에 저장됩니다. 기본 public 스키마에는 커뮤니티 테이블을 만들지 않았습니다. 데이터 테이블 29개는 private 스키마에 있습니다. 최신 보유 결정에 따라 탈퇴 시 계정 연결 작성 내용·소속·동의 기록을 삭제합니다.
 
-| 데이터                         | 저장 위치                   |
-| ------------------------------ | --------------------------- |
-| 게시글                         | private.posts               |
-| 댓글·답글                      | private.comments            |
-| 닉네임·학년·알림 설정          | private.profiles            |
-| 아이디 매핑·복구 코드 해시     | private.account_handles     |
-| 투표·공감·알림·신고            | private 안의 해당 테이블    |
-| 로그인 계정·비밀번호 해시·세션 | Supabase Auth의 auth 스키마 |
-| 게시 전 임시 저장              | 사용자 기기의 localStorage  |
+| 데이터                         | 저장 위치                                                |
+| ------------------------------ | -------------------------------------------------------- |
+| 게시글                         | private.posts                                            |
+| 댓글·답글                      | private.comments                                         |
+| 닉네임·학년·알림 설정          | private.profiles                                         |
+| 아이디 매핑·복구 코드 해시     | private.account_handles                                  |
+| 학년도·학년·반·동의 기록       | private.memberships                                      |
+| 학년별 반 수·학년도            | private.class_settings                                   |
+| 개인정보 안내·버전별 전문      | private.privacy_policy / private.privacy_policy_versions |
+| 투표·공감·알림·신고            | private 안의 해당 테이블                                 |
+| 로그인 계정·비밀번호 해시·세션 | Supabase Auth의 auth 스키마                              |
+| 게시 전 임시 저장              | 사용자 기기의 localStorage                               |
 
 Supabase Table Editor에서 스키마를 public 대신 private로 선택하세요. SQL Editor에서 다음 쿼리로 저장 상태를 확인할 수도 있습니다.
 

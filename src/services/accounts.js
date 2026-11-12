@@ -4,11 +4,12 @@ import { password } from '../lib/validation.js';
 export async function signIn(handle, secret) {
   return auth('signInWithPassword', { email: accountEmail(handle), password: secret });
 }
-export async function register(handle, secret) {
+export async function register(handle, secret, enrollment) {
   return edge('accounts', {
     action: 'signup',
     username: username(handle),
     password: password(secret),
+    ...enrollment,
   });
 }
 export async function recover(handle, code, secret) {
