@@ -102,3 +102,5 @@ Security Advisor는 의도적인 기본 거부 no policy INFO 25건과 기존 Au
 초기 코드 83d73ab의 [CI](https://github.com/codexora-dev/SchoolPot/actions/runs/43228591881)와 [Pages 배포](https://github.com/codexora-dev/SchoolPot/actions/runs/43228592068)가 성공했다. 실제 배포 SHA·JS/CSS 2개 자산 200/MIME과 공개 브라우저의 학년/반 입력·필수 동의 3개·준비 중 가입 차단·공개 개인정보 문의 링크·수행평가 로그인 보호·390px 가로폭·JavaScript 오류 0건을 확인했다.
 
 관리자 정책/소속 설정 변경 직후와 오래 열린 회원 화면에서 최신 상태를 다시 불러오도록 보완했다. 동의 오류 화면의 재시도가 최신 상태를 반영해 소속·동의 등록으로 이어지는 검사를 추가했고 전체 브라우저 44개를 다시 통과했다. 최신 합계는 168개 검사/assertion이며 신규 가입 전체 실제 흐름 미검증과 운영 준비 사항은 그대로 남는다. 최종 보완 코드 배포를 확인한다.
+
+최종 코드 9e979af의 [CI](https://github.com/codexora-dev/SchoolPot/actions/runs/43229685000)와 [Pages 배포](https://github.com/codexora-dev/SchoolPot/actions/runs/43229685112)가 성공했다. 실제 HTML 배포 SHA 및 JS/CSS 2개 자산 200/MIME을 다시 확인했다. 최종 공개 화면에서도 가입 준비 상태·필수 동의 3개·공개 개인정보 문의 링크와 JavaScript 오류 0건을 확인했다. 반 수·실제 문의 사이트/처리 주체·처리업체 고지는 운영자가 준비한 뒤 접수를 켜야 하며, 법적으로 적합한 운영 완료를 주장하지 않는다.

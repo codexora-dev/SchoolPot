@@ -19,6 +19,8 @@
 
 최신 Security Advisor는 의도적인 [기본 거부 RLS INFO](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) 29건과 기존 [유출 비밀번호 보호 비활성 WARN](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) 1건이다. 공개 배포 결과는 progress.md에 기록한다.
 
+최종 코드 9e979af의 CI/Pages 성공과 실제 배포 SHA·JS/CSS 200/MIME을 확인했다. 배포 후 브라우저에서 준비 중 가입 차단, 동의 3개, 공개 처리방침과 지정 외부 문의 링크, JavaScript 오류 0건을 재확인했다. 실제 문의 사이트와 운영 정책은 준비 미완료 상태이며 신규 가입 전체 긍정 흐름의 실제 검증을 완료한 것으로 표시하지 않는다.
+
 ## 이전 자동로그인·회원탈퇴 검증
 
 | 최신 검사                                 | 통과 |
