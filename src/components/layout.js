@@ -144,6 +144,7 @@ export function layout(state, onTheme, onLogout) {
             el('small', {}, schoolName + ' · 나의 스쿨팟'),
           ),
           link('프로필 설정', '#/profile', 'account-item'),
+          link('계정 관리 · 회원탈퇴', '#/profile?section=account', 'account-item'),
           link('건의·오류 제보', '#/feedback', 'account-item'),
           state.me?.is_admin ? link('관리자 대시보드', '#/admin', 'account-item') : null,
           button('로그아웃', onLogout, 'account-item logout-item'),

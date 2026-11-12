@@ -1,5 +1,5 @@
 import { el, field, button, link, toast } from '../lib/dom.js';
-import { auth, client } from '../services/api.js';
+import { auth, client, authStorage } from '../services/api.js';
 import { register, recover, signIn } from '../services/accounts.js';
 import { password } from '../lib/validation.js';
 import { icon } from '../components/icons.js';
@@ -66,6 +66,10 @@ export function authPage(mode, refresh) {
             location.hash = '/profile';
           } else {
             await signIn(values.username, values.password);
+            const remembered = authStorage.setRemember(Boolean(values.remember));
+            form.querySelector('[name=password]').value = '';
+            if (values.remember && !remembered)
+              toast('이 브라우저에서는 자동로그인을 유지할 수 없어요.');
             await refresh();
             location.hash = '/';
           }
@@ -123,6 +127,27 @@ export function authPage(mode, refresh) {
           'p',
           { class: 'hint' },
           '대소문자를 구분하지 않는 아이디예요. 실명·학번은 사용하지 마세요. 재학생 여부는 확인하지 않습니다.',
+        )
+      : null,
+    !signup && !reset && !update
+      ? el(
+          'div',
+          { class: 'login-options' },
+          el(
+            'label',
+            { class: 'checkbox' },
+            el('input', {
+              type: 'checkbox',
+              name: 'remember',
+              checked: authStorage.isRemembered(),
+            }),
+            '자동로그인',
+          ),
+          el(
+            'p',
+            { class: 'hint' },
+            '개인 기기에서만 선택해 주세요. 선택하지 않으면 현재 탭에서만 로그인을 유지해요.',
+          ),
         )
       : null,
     el(

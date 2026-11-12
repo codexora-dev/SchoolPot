@@ -59,7 +59,8 @@ async function member(page) {
     email_confirmed_at: new Date().toISOString(),
   };
   await page.addInitScript(
-    ({ user }) =>
+    ({ user }) => {
+      localStorage.setItem('schoolpot-remember-login', 'true');
       localStorage.setItem(
         'sb-hlglstdtgcodblynicmh-auth-token',
         JSON.stringify({
@@ -70,7 +71,8 @@ async function member(page) {
           expires_in: 3600,
           token_type: 'bearer',
         }),
-      ),
+      );
+    },
     { user },
   );
   await page.route('**/auth/v1/user', (r) => r.fulfill({ json: user }));

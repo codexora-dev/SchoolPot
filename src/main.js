@@ -1,6 +1,6 @@
 import './styles/main.css';
 import { el, link, empty, errorBox, toast } from './lib/dom.js';
-import { client, configured } from './services/api.js';
+import { client, configured, authStorage } from './services/api.js';
 import { call } from './services/community.js';
 import { layout, pageTitle } from './components/layout.js';
 import { feedbackPage } from './pages/feedback.js';
@@ -68,6 +68,7 @@ async function logout() {
     }
   }
   state.user = null;
+  authStorage.clear();
   state.me = null;
   state.authError = null;
   await refresh();
@@ -220,10 +221,14 @@ async function render() {
             ),
           );
     else if (route === '/profile' && state.user)
-      page = profilePage(state, async () => {
-        await refresh();
-        await render();
-      });
+      page = profilePage(
+        state,
+        async () => {
+          await refresh();
+          await render();
+        },
+        params,
+      );
     else if (!publicRoutes.includes(route) && gate())
       page = el('section', { class: 'panel gate' }, gate());
     else if (route.startsWith('/board/') || route === '/search' || route === '/popular')

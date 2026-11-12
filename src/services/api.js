@@ -1,13 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 import { safePublicKey } from '../lib/validation.js';
+import { createAuthStorage } from '../lib/auth-storage.js';
 const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
 export const configured = Boolean(url && key && safePublicKey(key));
+export const authStorage = createAuthStorage({
+  key: url ? `sb-${new URL(url).hostname.split('.')[0]}-auth-token` : 'schoolpot-auth',
+  persistent: () => window.localStorage,
+  temporary: () => window.sessionStorage,
+});
 export const client = configured
   ? createClient(url, key, {
       auth: {
         flowType: 'pkce',
         persistSession: true,
+        storage: authStorage.storage,
         autoRefreshToken: true,
         detectSessionInUrl: true,
       },
@@ -69,6 +76,9 @@ export async function edge(name, payload) {
       RECOVERY_FAILED: '아이디 또는 복구 코드가 올바르지 않아요.',
       RATE_LIMIT: '요청이 너무 많아요. 잠시 후 다시 시도해 주세요.',
       CONFIG: '계정 서버 설정을 확인해야 해요. 잠시 후 다시 시도해 주세요.',
+      REAUTHENTICATION_FAILED: '현재 비밀번호가 올바르지 않아요. 다시 확인해 주세요.',
+      FORBIDDEN_OR_RATE_LIMIT: '다시 로그인하거나 잠시 후 탈퇴를 다시 시도해 주세요.',
+      DELETE_FAILED: '탈퇴 요청을 완료하지 못했어요. 연결을 확인한 뒤 다시 시도해 주세요.',
     };
     throw new Error(
       messages[detail?.error] || '요청을 처리할 수 없어요. 연결을 확인하고 다시 시도해 주세요.',

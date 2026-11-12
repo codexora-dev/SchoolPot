@@ -1,10 +1,11 @@
 import { el, field, button, link, toast } from '../lib/dom.js';
-import { client } from '../services/api.js';
+import { deleteAccountDialog } from '../components/delete-account.js';
 import { call } from '../services/community.js';
 import { nickname } from '../lib/validation.js';
 import { pageTitle } from '../components/layout.js';
 export { authPage } from './auth-form.js';
-export function profilePage(state, refresh) {
+export function profilePage(state, refresh, params = new URLSearchParams()) {
+  const accountOnly = params.get('section') === 'account';
   const p = state.me?.profile;
   const status = el('p', { role: 'status' });
   const form = el(
@@ -61,80 +62,23 @@ export function profilePage(state, refresh) {
   return el(
     'section',
     {},
-    pageTitle('MY SCHOOLPOT', '나의 스쿨팟', '나에게 맞는 학교생활을 만들어가요.'),
-    form,
-    p
-      ? el(
-          'div',
-          { class: 'panel danger-zone' },
-          el('h2', {}, '계정 관리'),
-          link('비밀번호 변경', '#/password', 'button secondary'),
-          el(
-            'p',
-            { class: 'muted' },
-            '탈퇴하면 프로필과 활동 기록 연결이 삭제되고, 게시글과 댓글은 탈퇴한 사용자로 남아요. 익명 번호와 좋아요, 투표, 알림은 삭제돼요.',
-          ),
-          button(
-            '회원 탈퇴',
-            () => {
-              const dialog = el(
-                'dialog',
-                {},
-                el(
-                  'form',
-                  { method: 'dialog', class: 'form-stack' },
-                  el('h2', {}, '정말 탈퇴하시겠어요?'),
-                  el(
-                    'p',
-                    {},
-                    '삭제할 게시글과 댓글은 탈퇴 전에 직접 삭제해 주세요. 계속하려면 탈퇴를 입력해 주세요.',
-                  ),
-                  field('탈퇴 확인', 'confirm', 'text', { required: true }),
-                  field('현재 비밀번호', 'current-password', 'password', {
-                    required: true,
-                    autocomplete: 'current-password',
-                  }),
-                  el(
-                    'div',
-                    { class: 'actions' },
-                    button('취소', () => dialog.close()),
-                    button(
-                      '계정 삭제',
-                      async () => {
-                        try {
-                          const userId = state.user?.id;
-                          if (dialog.querySelector('[name=confirm]').value !== '탈퇴')
-                            throw new Error('탈퇴를 정확히 입력해 주세요.');
-                          const { edge } = await import('../services/api.js');
-                          await edge('delete-account', {
-                            password: dialog.querySelector('[name=current-password]').value,
-                          });
-                          dialog.close();
-                          try {
-                            if (userId) localStorage.removeItem(`schoolpot-draft:${userId}`);
-                          } catch {
-                            /* Storage cleanup cannot undo a completed deletion. */
-                          }
-                          await client.auth.signOut({ scope: 'local' });
-                          await refresh();
-                          location.hash = '/';
-                          toast('탈퇴 처리가 완료되었어요.');
-                        } catch (err) {
-                          toast(err.message);
-                        }
-                      },
-                      'button danger',
-                    ),
-                  ),
-                ),
-              );
-              document.body.append(dialog);
-              dialog.addEventListener('close', () => dialog.remove());
-              dialog.showModal();
-            },
-            'button danger',
-          ),
-        )
-      : null,
+    pageTitle(
+      'MY SCHOOLPOT',
+      accountOnly ? '계정 관리' : '나의 스쿨팟',
+      '나에게 맞는 학교생활을 만들어가요.',
+    ),
+    !accountOnly ? form : null,
+    el(
+      'div',
+      { class: 'panel danger-zone' },
+      el('h2', {}, '계정 관리'),
+      link('비밀번호 변경', '#/password', 'button secondary'),
+      el(
+        'p',
+        { class: 'muted' },
+        '회원탈퇴 시 계정과 프로필, 로그인 세션이 삭제됩니다. 게시글·댓글·문의 본문은 계정 연결 없이 남아요. 지우고 싶은 게시글과 댓글은 탈퇴 전에 삭제해 주세요.',
+      ),
+      button('회원 탈퇴', () => deleteAccountDialog(state, refresh), 'button danger'),
+    ),
   );
 }

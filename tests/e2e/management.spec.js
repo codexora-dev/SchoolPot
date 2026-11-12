@@ -4,7 +4,8 @@ const id = '88888888-8888-4888-8888-888888888888';
 const now = new Date().toISOString();
 async function member(page, admin = false) {
   await page.addInitScript(
-    ({ id }) =>
+    ({ id }) => {
+      localStorage.setItem('schoolpot-remember-login', 'true');
       localStorage.setItem(
         'sb-hlglstdtgcodblynicmh-auth-token',
         JSON.stringify({
@@ -15,7 +16,8 @@ async function member(page, admin = false) {
           token_type: 'bearer',
           user: { id, app_metadata: {}, user_metadata: {} },
         }),
-      ),
+      );
+    },
     { id },
   );
   await page.route('**/auth/v1/user', (route) =>

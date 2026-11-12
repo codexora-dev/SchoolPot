@@ -913,3 +913,10 @@ dialog .preserve {
 .feedback-card > .button {
   margin-top: 12px;
 }
+.login-options {
+  display: grid;
+  gap: 6px;
+}
+.login-options .hint {
+  margin: 0;
+}

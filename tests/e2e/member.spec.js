@@ -21,6 +21,7 @@ const post = {
 async function setup(page, isAdmin = false) {
   await page.addInitScript(
     ({ id }) => {
+      localStorage.setItem('schoolpot-remember-login', 'true');
       localStorage.setItem(
         'sb-hlglstdtgcodblynicmh-auth-token',
         JSON.stringify({

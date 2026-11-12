@@ -1,3 +1,4 @@
+import { icon } from '../components/icons.js';
 export function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
@@ -43,15 +44,18 @@ export function field(label, name, type = 'text', options = {}) {
         class: 'password-toggle',
         'aria-label': `${label} 표시`,
         'aria-pressed': 'false',
+        'aria-controls': id,
+        title: `${label} 표시`,
         onClick: () => {
           const visible = input.type === 'password';
           input.type = visible ? 'text' : 'password';
-          toggle.textContent = visible ? '숨기기' : '보기';
+          toggle.replaceChildren(icon(visible ? 'eyeOff' : 'eye'));
           toggle.setAttribute('aria-label', `${label} ${visible ? '숨기기' : '표시'}`);
           toggle.setAttribute('aria-pressed', String(visible));
+          toggle.title = `${label} ${visible ? '숨기기' : '표시'}`;
         },
       },
-      '보기',
+      icon('eye'),
     );
     control = el('div', { class: 'password-control' }, input, toggle);
   }

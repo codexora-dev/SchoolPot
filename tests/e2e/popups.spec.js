@@ -96,7 +96,8 @@ async function admin(page) {
     user_metadata: {},
   };
   await page.addInitScript(
-    ({ user }) =>
+    ({ user }) => {
+      localStorage.setItem('schoolpot-remember-login', 'true');
       localStorage.setItem(
         'sb-hlglstdtgcodblynicmh-auth-token',
         JSON.stringify({
@@ -107,7 +108,8 @@ async function admin(page) {
           expires_at: Math.floor(Date.now() / 1000) + 3600,
           expires_in: 3600,
         }),
-      ),
+      );
+    },
     { user },
   );
   await page.route('**/auth/v1/user', (route) => route.fulfill({ json: user }));
