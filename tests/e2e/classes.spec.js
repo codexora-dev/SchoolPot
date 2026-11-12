@@ -42,10 +42,9 @@ async function session(page, admin = false, complete = true) {
   return state;
 }
 async function consent(page) {
-  for (const name of ['age_14_confirmed', 'privacy_consent', 'overseas_consent'])
-    await page.locator(`input[name=${name}]`).check();
+  await page.locator('input[name=age_14_confirmed]').check();
 }
-test('가입 학년별 반 선택·14세·별도 필수 동의와 서버 전송', async ({ page }) => {
+test('동의 없이 가입 학년별 반 선택·14세 확인과 서버 전송', async ({ page }) => {
   let body;
   await page.route('**/functions/v1/accounts', (route) => {
     if (route.request().method() === 'OPTIONS')
@@ -62,8 +61,10 @@ test('가입 학년별 반 선택·14세·별도 필수 동의와 서버 전송'
   });
   await page.setViewportSize({ width: 320, height: 900 });
   await page.goto('/#/signup');
-  for (const name of ['age_14_confirmed', 'privacy_consent', 'overseas_consent'])
-    await expect(page.locator(`input[name=${name}]`)).not.toBeChecked();
+  await expect(page.locator('input[name=age_14_confirmed]')).not.toBeChecked();
+  await expect(
+    page.locator('input[name=privacy_consent], input[name=overseas_consent]'),
+  ).toHaveCount(0);
   await page.getByLabel('학년', { exact: true }).selectOption('2');
   await expect(page.getByLabel('반', { exact: true }).locator('option')).toHaveCount(4);
   await page.getByLabel('반', { exact: true }).selectOption('3');
@@ -71,11 +72,9 @@ test('가입 학년별 반 선택·14세·별도 필수 동의와 서버 전송'
   await page.screenshot({ path: 'docs/screenshots/signup-class-mobile.png', fullPage: true });
   await page.getByLabel('아이디', { exact: true }).fill('classfriend');
   await page.getByLabel('비밀번호', { exact: true }).fill('testing888');
-  await page.locator('input[name=age_14_confirmed]').check();
-  await page.locator('input[name=privacy_consent]').check();
   await page.getByRole('button', { name: '회원가입', exact: true }).click();
   expect(body).toBeUndefined();
-  await page.locator('input[name=overseas_consent]').check();
+  await consent(page);
   await page.getByRole('button', { name: '회원가입', exact: true }).click();
   await expect(page.getByRole('heading', { name: '가입이 완료되었어요' })).toBeVisible();
   expect(body).toMatchObject({
@@ -84,10 +83,15 @@ test('가입 학년별 반 선택·14세·별도 필수 동의와 서버 전송'
     school_year: 2026,
     policy_version: 1,
     age_14_confirmed: true,
-    privacy_consent: true,
-    overseas_consent: true,
   });
-  for (const name of ['email', 'birth_date', 'student_id', 'real_name'])
+  for (const name of [
+    'email',
+    'birth_date',
+    'student_id',
+    'real_name',
+    'privacy_consent',
+    'overseas_consent',
+  ])
     expect(body).not.toHaveProperty(name);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
@@ -107,11 +111,11 @@ test('기존 회원은 소속 등록 후 본인 반 일정 화면에 진입하�
     return r.fulfill({ json: { ok: true } });
   });
   await page.goto('/#/assessments');
-  await page.getByRole('link', { name: '소속·동의 등록', exact: true }).click();
+  await page.getByRole('link', { name: '학년·반 선택', exact: true }).click();
   await page.getByLabel('학년', { exact: true }).selectOption('1');
   await page.getByLabel('반', { exact: true }).selectOption('1');
-  await consent(page);
-  await page.getByRole('button', { name: '동의하고 소속 등록', exact: true }).click();
+  await expect(page.locator('main input[type=checkbox]')).toHaveCount(0);
+  await page.getByRole('button', { name: '내 반으로 시작하기', exact: true }).click();
   await expect(page.getByRole('heading', { name: '수행평가 캘린더', exact: true })).toBeVisible();
   expect(payload.class_number).toBe(1);
   await expect(
@@ -169,9 +173,7 @@ test('관리자 학년별 반 수 저장·회원 소속 정정', async ({ page }
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: 'docs/screenshots/admin-class-settings.png', fullPage: true });
 });
-test('개인정보 안내 준비 중에는 가입을 막고 공개 처리방침의 외부 문의 링크를 제공한다', async ({
-  page,
-}) => {
+test('문서 검토 상태와 별개로 가입할 수 있고 공개 이메일 문의를 제공한다', async ({ page }) => {
   await page.route('**/rest/v1/rpc/school_setup', (r) =>
     r.fulfill({
       json: {
@@ -179,13 +181,14 @@ test('개인정보 안내 준비 중에는 가입을 막고 공개 처리방침�
         policy: {
           ...schoolSetup.policy,
           is_ready: false,
+          contact_email: 'kminjae803@naver.com',
           contact_url: 'https://codexora-dev.github.io/SPContact',
         },
       },
     }),
   );
   await page.goto('/#/signup');
-  await expect(page.getByRole('button', { name: '회원가입', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: '회원가입', exact: true })).toBeEnabled();
   await page.goto('/#/privacy');
   await expect(page.getByRole('heading', { name: '개인정보 처리방침', exact: true })).toBeVisible();
   const contact = page.getByRole('link', {
@@ -194,20 +197,21 @@ test('개인정보 안내 준비 중에는 가입을 막고 공개 처리방침�
   });
   await expect(contact).toHaveAttribute('href', 'https://codexora-dev.github.io/SPContact');
   await expect(contact).toHaveAttribute('rel', 'noopener noreferrer');
+  await expect(
+    page.getByRole('link', { name: 'kminjae803@naver.com', exact: true }),
+  ).toHaveAttribute('href', 'mailto:kminjae803@naver.com');
 });
-test('열린 화면에서 정책이 바뀌면 재시도 후 최신 소속·동의 등록으로 안내한다', async ({ page }) => {
+test('소속이 유효하지 않게 되면 재시도 후 학년·반 선택으로 안내한다', async ({ page }) => {
   const state = await session(page, false, true);
   await page.route('**/rest/v1/rpc/community', (route) => {
     if (route.request().postDataJSON().p_action !== 'assessments') return route.fallback();
     state.enrollment_current = false;
-    return route.fulfill({ status: 400, json: { code: 'P0001', message: 'CONSENT_REQUIRED' } });
+    return route.fulfill({ status: 400, json: { code: 'P0001', message: 'MEMBERSHIP_REQUIRED' } });
   });
   await page.goto('/#/assessments');
-  await expect(page.getByRole('alert')).toContainText('최신 개인정보 안내');
+  await expect(page.getByRole('alert')).toContainText('학년·반');
   await page.getByRole('button', { name: '다시 시도', exact: true }).click();
-  await page.getByRole('link', { name: '소속·동의 등록', exact: true }).click();
-  await expect(
-    page.getByRole('heading', { name: '소속과 개인정보 동의', exact: true }),
-  ).toBeVisible();
+  await page.getByRole('link', { name: '학년·반 선택', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '학년·반 선택', exact: true })).toBeVisible();
   await expect(page.getByLabel('학년', { exact: true })).toBeDisabled();
 });

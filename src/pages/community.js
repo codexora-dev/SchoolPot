@@ -518,7 +518,11 @@ export async function writePage(params, state) {
           )
             throw new Error('투표 항목은 2~6개 입력해 주세요.');
           const saved = await call('save_post', payload);
-          localStorage.removeItem(draftKey);
+          try {
+            localStorage.removeItem(draftKey);
+          } catch {
+            /* A saved post must still open when storage is blocked. */
+          }
           location.hash = `/post/${saved.id}`;
         } catch (err) {
           status.textContent = err.message;

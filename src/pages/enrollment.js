@@ -23,7 +23,7 @@ export async function enrollmentPage(state, refresh) {
   const form = el(
     'form',
     {
-      class: 'panel form-stack',
+      class: 'panel form-stack class-selection-card',
       onSubmit: async (event) => {
         event.preventDefault();
         const submit = form.querySelector('[type=submit]');
@@ -31,7 +31,7 @@ export async function enrollmentPage(state, refresh) {
         try {
           await schoolMembership('enroll', enrollmentPayload(form, setup, existing));
           await refresh();
-          toast('소속과 동의를 저장했어요.');
+          toast('내 반을 저장했어요.');
           location.hash = '/assessments';
         } catch (err) {
           status.textContent = err.message;
@@ -47,21 +47,17 @@ export async function enrollmentPage(state, refresh) {
       {
         class: 'button primary',
         type: 'submit',
-        disabled: !setup.policy.is_ready || !setup.counts.some(Boolean),
+        disabled: !setup.counts.some(Boolean),
       },
-      '동의하고 소속 등록',
+      '내 반으로 시작하기',
     ),
   );
   return el(
     'section',
     {},
-    pageTitle(
-      'MY CLASS',
-      '소속과 개인정보 동의',
-      '기존 회원도 최초 한 번 본인 소속을 등록해야 해요.',
-    ),
+    pageTitle('MY CLASS', '학년·반 선택', '우리 반 일정만 정확하게 챙겨드릴게요.'),
     form,
-    link('동의하지 않고 계정 관리·탈퇴', '#/profile?section=account', 'button secondary'),
+    link('계정 관리', '#/profile?section=account', 'button secondary'),
     state.me?.is_admin
       ? link('관리자 학급·개인정보 설정', '#/admin?tab=classes', 'button secondary')
       : null,

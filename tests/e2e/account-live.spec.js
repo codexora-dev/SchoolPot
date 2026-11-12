@@ -24,10 +24,7 @@ test('실제 자동로그인 선택·해제 복원과 비밀번호 재확인 회
   const { data: setup, error: setupError } = await client.rpc('school_setup');
   expect(setupError).toBe(null);
   const grade = setup.counts.findIndex((n) => n > 0) + 1;
-  test.skip(
-    !setup.policy.is_ready || !grade,
-    '운영자가 실제 반 수·개인정보 안내를 준비한 뒤 실행합니다.',
-  );
+  test.skip(!grade, '운영자가 실제 반 수를 설정한 뒤 실행합니다.');
   let created = false,
     deleted = false;
   const login = async (remember) => {
@@ -58,8 +55,6 @@ test('실제 자동로그인 선택·해제 복원과 비밀번호 재확인 회
         class_number: 1,
         policy_version: setup.policy.version,
         age_14_confirmed: true,
-        privacy_consent: true,
-        overseas_consent: true,
       },
     });
     expect(registered.error).toBe(null);

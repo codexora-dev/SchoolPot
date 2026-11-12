@@ -53,8 +53,8 @@ export async function homePage(state) {
               '우리의 작은 광장, 스쿨팟에서 만나요.',
             ),
             link(
-              enabled ? '이야기 남기기 ↗' : '스쿨팟 시작하기 ↗',
-              enabled ? '#/write' : '#/signup',
+              enabled ? '이야기 남기기 ↗' : state.user ? '우리 반 선택하기 ↗' : '스쿨팟 시작하기 ↗',
+              enabled ? '#/write' : state.user ? '#/enrollment' : '#/signup',
               'button hero-button',
             ),
           ),
@@ -130,9 +130,15 @@ export async function homePage(state) {
                     link('글쓰기', '#/write', 'button primary'),
                   )
               : empty(
-                  '우리만의 이야기를 만나보세요',
-                  '로그인하면 게시글과 학교생활 정보를 확인할 수 있어요.',
-                  link('로그인하기', '#/login', 'button primary'),
+                  state.user ? '우리 반 선택만 하면 준비 끝' : '우리만의 이야기를 만나보세요',
+                  state.user
+                    ? '학년과 반을 선택하고 친구들의 이야기를 만나보세요.'
+                    : '로그인하면 게시글과 학교생활 정보를 확인할 수 있어요.',
+                  link(
+                    state.user ? '학년·반 선택' : '로그인하기',
+                    state.user ? '#/enrollment' : '#/login',
+                    'button primary',
+                  ),
                 ),
           ),
         ),

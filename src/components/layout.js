@@ -34,7 +34,18 @@ export function layout(state, onTheme, onLogout) {
       'div',
       { class: 'school-tag' },
       el('span', { class: 'school-avatar' }, schoolName.slice(0, 1)),
-      el('div', {}, el('strong', {}, schoolName), el('small', {}, '우리의 학교생활을 한곳에')),
+      el(
+        'div',
+        {},
+        el('strong', {}, schoolName),
+        el(
+          'small',
+          {},
+          state.me?.membership
+            ? `${state.me.membership.grade}학년 ${state.me.membership.class_number}반 · 나의 학교`
+            : '함께 만드는 우리의 학교',
+        ),
+      ),
     ),
     el(
       'nav',
@@ -145,6 +156,7 @@ export function layout(state, onTheme, onLogout) {
             el('small', {}, schoolName + ' · 나의 스쿨팟'),
           ),
           link('프로필 설정', '#/profile', 'account-item'),
+          link('학년·반 선택', '#/enrollment', 'account-item'),
           link('계정 관리 · 회원탈퇴', '#/profile?section=account', 'account-item'),
           link('건의·오류 제보', '#/feedback', 'account-item'),
           state.me?.is_admin ? link('관리자 대시보드', '#/admin', 'account-item') : null,
@@ -158,6 +170,12 @@ export function layout(state, onTheme, onLogout) {
     'header',
     { class: 'header' },
     mobileBrand,
+    el(
+      'div',
+      { class: 'header-context' },
+      el('span', { class: 'header-kicker' }, 'SCHOOLPOT'),
+      el('strong', {}, schoolName),
+    ),
     searchForm(),
     el(
       'div',

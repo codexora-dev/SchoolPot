@@ -21,6 +21,5 @@ export const enrolled = {
 export async function agreeSignup(page, grade = '1', classroom = '1') {
   await page.getByLabel('학년', { exact: true }).selectOption(grade);
   await page.getByLabel('반', { exact: true }).selectOption(classroom);
-  for (const name of ['age_14_confirmed', 'privacy_consent', 'overseas_consent'])
-    await page.locator(`input[name=${name}]`).check();
+  for (const name of ['age_14_confirmed']) await page.locator(`input[name=${name}]`).check();
 }

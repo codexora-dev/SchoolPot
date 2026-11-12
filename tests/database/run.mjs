@@ -59,6 +59,15 @@ await db.exec(
     'utf8',
   ),
 );
+await db.exec(
+  await readFile(
+    new URL(
+      '../../supabase/migrations/20261112141333_consent_free_class_profiles.sql',
+      import.meta.url,
+    ),
+    'utf8',
+  ),
+);
 // Every regression case uses the final schema; these settings are fixtures only.
 await db.exec(
   "update private.class_settings set counts=array[2,3,1];update private.privacy_policy set is_ready=true,overseas_notice='Test fixture only; never publish as an operating policy.'",
@@ -819,7 +828,7 @@ await ok('신규 관리 API도 이용 제한·현재 세션을 검증', async ()
 });
 await db.exec('reset role');
 await db.exec(
-  "delete from private.memberships;update private.class_settings set counts=array[0,0,0],revision=1;update private.privacy_policy set is_ready=false,version=1,overseas_notice=''",
+  "delete from private.memberships;update private.class_settings set counts=array[0,0,0],revision=1;update private.privacy_policy set is_ready=false,overseas_notice=''",
 );
 await classTests({ db, as, call, ok, denied, users });
 await ok('탈퇴 시 작성 내용·소속·동의 삭제, 기존 JWT 접근 차단', async () => {

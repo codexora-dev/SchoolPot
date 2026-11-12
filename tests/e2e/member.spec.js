@@ -110,6 +110,37 @@ test('글쓰기와 임시 저장 및 게시', async ({ page }) => {
   await page.getByRole('button', { name: '게시하기', exact: true }).click();
   await expect(page.getByRole('heading', { name: post.title })).toBeVisible();
 });
+
+test('게시 중 중복 제출과 저장소 오류가 추가 게시를 만들지 않는다', async ({ page }) => {
+  await setup(page);
+  let saves = 0;
+  let release;
+  const pending = new Promise((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/rest/v1/rpc/community', async (route) => {
+    if (route.request().postDataJSON().p_action !== 'save_post') return route.fallback();
+    saves++;
+    await pending;
+    await route.fulfill({ json: { id: postId } });
+  });
+  await page.goto('/#/write?board=free');
+  await page.getByLabel('제목', { exact: true }).fill('중복 방지 테스트');
+  await page.getByLabel('내용', { exact: true }).fill('저장소가 차단되어도 게시 완료');
+  await page.evaluate(() => {
+    window.Storage.prototype.removeItem = function () {
+      throw new window.DOMException('Blocked', 'SecurityError');
+    };
+    const form = document.querySelector('main form');
+    form.requestSubmit();
+    form.requestSubmit();
+  });
+  await expect.poll(() => saves).toBe(1);
+  await expect(page.getByRole('button', { name: '게시하기', exact: true })).toBeDisabled();
+  release();
+  await expect(page).toHaveURL(new RegExp('/#/post/' + postId + '$'));
+  expect(saves).toBe(1);
+});
 test('일반 회원 관리자 화면 차단, 관리자만 통계 표시', async ({ page }) => {
   await setup(page);
   await page.goto('/#/admin');

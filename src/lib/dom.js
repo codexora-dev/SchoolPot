@@ -4,7 +4,31 @@ export function el(tag, attrs = {}, ...children) {
   for (const [k, v] of Object.entries(attrs)) {
     if (v === null || v === undefined || v === false) continue;
     if (k === 'class') node.className = v;
-    else if (k.startsWith('on') && typeof v === 'function')
+    else if (k === 'onSubmit' && tag === 'form' && typeof v === 'function') {
+      let busy = false;
+      node.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (busy) return;
+        busy = true;
+        node.setAttribute('aria-busy', 'true');
+        const controls = [...node.querySelectorAll('button[type=submit]')].map((button) => [
+          button,
+          button.disabled,
+        ]);
+        for (const [button] of controls) button.disabled = true;
+        try {
+          await v(event);
+        } catch {
+          const status = node.querySelector('[role=status]');
+          if (status) status.textContent = '처리하지 못했어요. 잠시 후 다시 시도해 주세요.';
+          else toast('처리하지 못했어요. 잠시 후 다시 시도해 주세요.');
+        } finally {
+          busy = false;
+          node.setAttribute('aria-busy', 'false');
+          for (const [button, disabled] of controls) button.disabled = disabled;
+        }
+      });
+    } else if (k.startsWith('on') && typeof v === 'function')
       node.addEventListener(k.slice(2).toLowerCase(), v);
     else if (k === 'checked' || k === 'disabled' || k === 'selected') node[k] = Boolean(v);
     else node.setAttribute(k, String(v));

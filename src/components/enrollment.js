@@ -11,9 +11,12 @@ export function privacyContent(setup) {
       'p',
       { class: 'preserve' },
       p.overseas_notice ||
-        '운영자가 실제 처리업체·처리 국가·보유기간과 권리행사 경로를 확인하고 있습니다. 준비가 끝나기 전에는 새 동의를 받지 않습니다.',
+        '처리업체·처리 국가·로그 및 백업 보유기간의 상세 안내는 운영자가 확인 중입니다. 문의는 아래 이메일로 접수할 수 있습니다.',
     ),
     el('h3', {}, '개인정보 문의와 권리행사'),
+    p.contact_email
+      ? el('a', { class: 'privacy-email', href: `mailto:${p.contact_email}` }, p.contact_email)
+      : null,
     el(
       'p',
       {},
@@ -64,17 +67,10 @@ export function enrollmentFields(setup, existing) {
   };
   grade.addEventListener('change', update);
   update();
-  const checkbox = (name, text) =>
-    el(
-      'label',
-      { class: 'checkbox consent-checkbox' },
-      el('input', { type: 'checkbox', name, required: true }),
-      text,
-    );
   return el(
     'fieldset',
     { class: 'enrollment-fields' },
-    el('legend', {}, `${setup.school_year}학년도 소속과 필수 동의`),
+    el('legend', {}, `${setup.school_year}학년도 내 소속`),
     el(
       'div',
       { class: 'class-selectors' },
@@ -90,44 +86,11 @@ export function enrollmentFields(setup, existing) {
       '본인 소속을 정확히 선택해 주세요. 가입 후에는 관리자에게 정정을 요청해야 해요.',
     ),
     el(
-      'div',
-      { class: 'privacy-summary hint' },
-      el('p', {}, '목적: 계정 인증·복구, 본인 반 수행평가, 커뮤니티와 문의 운영·보안'),
-      el(
-        'p',
-        {},
-        '항목: 아이디·비밀번호·닉네임·학년도·학년·반·14세 이상 확인·동의 기록·서비스 이용 기록',
-      ),
-      el(
-        'p',
-        {},
-        '기간: 회원 정보와 작성 내용은 탈퇴 시 삭제. 보안·처리업체 기록의 별도 기간은 아래 안내에 명시합니다.',
-      ),
-      el('p', {}, '동의를 거부할 수 있으며, 필수 동의 거부 시 가입·회원 서비스 이용이 제한됩니다.'),
+      'p',
+      { class: 'processing-note' },
+      '선택한 소속을 저장해 우리 반 수행평가를 보여드려요. 별도의 동의 체크 없이 등록할 수 있습니다. ',
+      link('개인정보 처리 안내', '#/privacy', 'inline-link'),
     ),
-    el(
-      'details',
-      { class: 'consent-notice' },
-      el('summary', {}, '개인정보 수집·이용 및 위탁·국외 처리 안내 전문'),
-      privacyContent(setup),
-    ),
-    link('개인정보 처리방침 별도 페이지', '#/privacy', 'text-button'),
-    checkbox('age_14_confirmed', '[필수] 만 14세 이상입니다.'),
-    checkbox(
-      'privacy_consent',
-      '[필수] 수집 목적·항목·보유기간·거부권을 확인하고 개인정보 수집·이용에 동의합니다.',
-    ),
-    checkbox(
-      'overseas_consent',
-      '[필수] 별도 위탁·국외 처리 안내를 확인하고 해당 처리에 동의합니다.',
-    ),
-    !setup.policy.is_ready
-      ? el(
-          'p',
-          { class: 'hint', role: 'status' },
-          '개인정보 처리방침과 문의 경로를 준비 중이에요. 준비가 끝나면 동의하고 진행할 수 있어요.',
-        )
-      : null,
   );
 }
 export function enrollmentPayload(form, setup, existing) {
@@ -138,7 +101,5 @@ export function enrollmentPayload(form, setup, existing) {
     class_number: existing?.class_number || Number(data.get('class_number')),
     policy_version: setup.policy.version,
     age_14_confirmed: data.has('age_14_confirmed'),
-    privacy_consent: data.has('privacy_consent'),
-    overseas_consent: data.has('overseas_consent'),
   };
 }

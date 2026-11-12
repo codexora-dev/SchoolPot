@@ -168,7 +168,7 @@ export async function assessmentsPage(params, state, reload) {
     return empty(
       '소속을 등록해 주세요',
       '본인 학년·반의 일정만 확인할 수 있어요.',
-      link('소속·동의 등록', '#/enrollment', 'button primary'),
+      link('학년·반 선택', '#/enrollment', 'button primary'),
     );
   const items = await call('assessments');
   const unassigned = await call('assessments_unassigned');

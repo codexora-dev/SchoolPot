@@ -161,7 +161,7 @@ export async function classManager(params, reload) {
                 el(
                   'p',
                   { class: 'meta' },
-                  `${m.username} · ${m.school_year ? `${m.school_year}학년도 ${m.grade}학년 ${m.class_number}반` : '본인 소속 등록·동의 필요'}`,
+                  `${m.username} · ${m.school_year ? `${m.school_year}학년도 ${m.grade}학년 ${m.class_number}반` : '본인 학년·반 선택 필요'}`,
                 ),
               ),
               m.revision ? button('소속 정정', () => correct(m), 'button secondary') : null,
@@ -206,12 +206,13 @@ export async function privacyManager(reload) {
           await schoolMembership('admin_save_policy', {
             version: p.version,
             controller: data.get('controller'),
+            contact_email: data.get('contact_email'),
             contact_url: data.get('contact_url'),
             overseas_notice: data.get('overseas_notice'),
             is_ready: data.has('is_ready'),
             review_confirmed: data.has('review_confirmed'),
           });
-          toast('개인정보 안내를 저장했어요. 변경된 문서는 회원에게 다시 동의를 받습니다.');
+          toast('개인정보 안내를 저장했어요. 공개 화면에 최신 안내가 반영됩니다.');
           await reload();
         } catch (err) {
           status.textContent = err.message;
@@ -220,7 +221,12 @@ export async function privacyManager(reload) {
         }
       },
     },
-    el('h2', {}, '개인정보 안내·동의 접수'),
+    el('h2', {}, '개인정보 처리 안내'),
+    el(
+      'p',
+      { class: 'hint' },
+      '학년·반은 동의 체크 없이 등록합니다. 이 화면은 공개 처리 안내와 연락처를 관리하는 곳입니다.',
+    ),
     field('실제 개인정보처리자 이름 또는 단체명', 'controller', 'text', {
       required: true,
       maxlength: 120,
@@ -230,6 +236,11 @@ export async function privacyManager(reload) {
       required: true,
       maxlength: 400,
       value: p.contact_url,
+    }),
+    field('개인정보 문의 이메일', 'contact_email', 'email', {
+      required: true,
+      maxlength: 254,
+      value: p.contact_email || 'kminjae803@naver.com',
     }),
     field('위탁·국외 처리·보안 기록 보유기간 안내', 'overseas_notice', 'textarea', {
       required: true,
@@ -244,7 +255,7 @@ export async function privacyManager(reload) {
     el(
       'p',
       { class: 'hint' },
-      '문의 사이트가 준비 중이거나 실제 문의를 받지 못하면 접수를 켜지 마세요. 문서 저장만으로 법적 검토가 완료되는 것은 아닙니다. 반 수와 정책을 준비하기 전에는 새 가입을 받을 수 없습니다.',
+      '공개 이메일의 문의를 정기적으로 확인해 주세요. 문서 저장과 검토 표시만으로 법적 검토가 완료되는 것은 아닙니다.',
     ),
     el(
       'label',
@@ -256,7 +267,7 @@ export async function privacyManager(reload) {
       'label',
       { class: 'checkbox' },
       el('input', { type: 'checkbox', name: 'is_ready', checked: p.is_ready }),
-      '확인한 문서를 공개하고 개인정보 동의·가입 접수를 켭니다.',
+      '공개 안내의 운영 검토 완료로 표시합니다. 학년·반 선택과는 별개입니다.',
     ),
     status,
     el('button', { class: 'button primary', type: 'submit' }, '개인정보 안내 저장'),

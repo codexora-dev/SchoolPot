@@ -11,7 +11,7 @@ export async function classTests({ db, as, call, ok, denied, users }) {
     ).rows[0].result;
   let config, consent, assessment;
   await ok(
-    '공개 학급·정책 설정에는 회원 정보가 없고 초기 반 수와 동의 접수는 준비 상태',
+    '공개 학급·정책 설정에는 회원 정보가 없고 초기 반 수와 문서 검토 상태를 제공',
     async () => {
       await as('', 'anon');
       config = await setup();
@@ -86,55 +86,58 @@ export async function classTests({ db, as, call, ok, denied, users }) {
       /check constraint/,
     );
   });
-  await ok('개인정보 접수 준비·정책 버전·검토 확인 강제', async () => {
+  await ok(
+    '안내 문서 준비 상태는 학년·반 선택을 막지 않으며 관리자 문서 검토는 별도로 유지',
+    async () => {
+      await as('a');
+      await denied(() => api('enroll', {}), /CLASS_INVALID/);
+      await as('admin');
+      await denied(
+        () =>
+          api('admin_save_policy', {
+            version: config.policy.version,
+            controller: '테스트 운영자',
+            contact_url: 'https://example.invalid/contact',
+            overseas_notice: '테스트 정책',
+            is_ready: true,
+          }),
+        /POLICY_NOT_READY/,
+      );
+      await api('admin_save_policy', {
+        version: config.policy.version,
+        controller: '테스트 운영자',
+        contact_url: 'https://example.invalid/contact',
+        overseas_notice:
+          'DB 검증 fixture입니다. 실제 운영 정책·국외 이전 고지에 사용하지 않습니다.',
+        is_ready: true,
+        review_confirmed: true,
+      });
+      config = await setup();
+      consent = {
+        school_year: config.school_year,
+        grade: 1,
+        class_number: 1,
+        policy_version: config.policy.version,
+        age_14_confirmed: true,
+      };
+    },
+  );
+  await ok('소속 선택은 동의·문서 버전 없이 허용하고 실제 반 범위는 계속 검증', async () => {
     await as('a');
-    await denied(() => api('enroll', {}), /POLICY_NOT_READY/);
-    await as('admin');
-    await denied(
-      () =>
-        api('admin_save_policy', {
-          version: config.policy.version,
-          controller: '테스트 운영자',
-          contact_url: 'https://example.invalid/contact',
-          overseas_notice: '테스트 정책',
-          is_ready: true,
-        }),
-      /POLICY_NOT_READY/,
-    );
-    await api('admin_save_policy', {
-      version: config.policy.version,
-      controller: '테스트 운영자',
-      contact_url: 'https://example.invalid/contact',
-      overseas_notice: 'DB 검증 fixture입니다. 실제 운영 정책·국외 이전 고지에 사용하지 않습니다.',
-      is_ready: true,
-      review_confirmed: true,
-    });
-    config = await setup();
-    consent = {
-      school_year: config.school_year,
-      grade: 1,
-      class_number: 1,
-      policy_version: config.policy.version,
-      age_14_confirmed: true,
-      privacy_consent: true,
-      overseas_consent: true,
-    };
-  });
-  await ok('14세 확인·별도 필수 동의·최신 정책·실제 학급 범위 서버 검증', async () => {
-    await as('a');
-    for (const [payload, pattern] of [
-      [{ ...consent, age_14_confirmed: false }, /AGE_REQUIRED/],
-      [{ ...consent, age_14_confirmed: 'true' }, /AGE_REQUIRED/],
-      [{ ...consent, privacy_consent: false }, /CONSENT_REQUIRED/],
-      [{ ...consent, overseas_consent: false }, /CONSENT_REQUIRED/],
-      [{ ...consent, policy_version: 1 }, /STALE_POLICY/],
-      [{ ...consent, school_year: config.school_year + 1 }, /STALE_CLASS_SETTINGS/],
-      [{ ...consent, class_number: 3 }, /CLASS_INVALID/],
+    await api('enroll', { school_year: config.school_year, grade: 1, class_number: 1 });
+    assert.equal((await call('me')).enrollment_current, true);
+    for (const payload of [
+      { ...consent, class_number: 3 },
+      { ...consent, grade: 4 },
     ])
-      await denied(() => api('enroll', payload), pattern);
+      await denied(() => api('enroll', payload), /CLASS_INVALID/);
+    await denied(
+      () => api('enroll', { ...consent, school_year: config.school_year + 1 }),
+      /STALE_CLASS_SETTINGS/,
+    );
   });
   await ok(
-    '가입 서버 전용 게이트는 동의 검증 후 소속을 기록하며 일반 회원은 실행할 수 없다',
+    '가입 서버는 연령 확인 후 동의 없이 소속을 기록하며 일반 회원은 실행할 수 없다',
     async () => {
       const gateway = async (action, payload) =>
         (
@@ -184,7 +187,7 @@ export async function classTests({ db, as, call, ok, denied, users }) {
       await db.query('delete from auth.users where id=$1', [created]);
     },
   );
-  await ok('소속 등록은 auth.uid 기준·본인 최초 등록만 허용·동의 시각 저장', async () => {
+  await ok('소속 등록은 auth.uid 기준·본인 최초 등록만 허용·허위 동의 시각 없음', async () => {
     await as('a');
     await api('enroll', { ...consent, user_id: users.b, is_admin: true });
     let me = await call('me');
@@ -199,9 +202,11 @@ export async function classTests({ db, as, call, ok, denied, users }) {
     await db.exec('reset role');
     const m = (await db.query('select * from private.memberships where user_id=$1', [users.a]))
       .rows[0];
-    assert.ok(m.consented_at);
-    assert.ok(m.age_14_confirmed_at);
-    assert.ok(m.overseas_consented_at);
+    assert.equal(m.consented_at, null);
+    assert.equal(m.collection_basis, 'service_contract');
+    assert.ok(m.notice_recorded_at);
+    assert.equal(m.age_14_confirmed_at, null);
+    assert.equal(m.overseas_consented_at, null);
   });
   await ok('프로필 학년·반·역할 수정으로 소속 권한 우회 불가', async () => {
     await as('a');
@@ -364,7 +369,7 @@ export async function classTests({ db, as, call, ok, denied, users }) {
       (await call('assessments')).some((a) => a.id === id && a.grade === 1 && a.class_number === 2),
     );
   });
-  await ok('정책 변경 시 재동의를 요구하되 소속 변경은 허용하지 않는다', async () => {
+  await ok('처리 안내 변경으로 기존 소속을 차단하거나 타 반 이동을 허용하지 않는다', async () => {
     await as('admin');
     config = await setup();
     await api('admin_save_policy', {
@@ -375,13 +380,13 @@ export async function classTests({ db, as, call, ok, denied, users }) {
     });
     config = await setup();
     await as('a');
-    assert.equal((await call('me')).enrollment_current, false);
-    await denied(() => call('assessments'), /CONSENT_REQUIRED/);
+    assert.equal((await call('me')).enrollment_current, true);
+    await call('assessments');
     await denied(
       () => api('enroll', { ...consent, policy_version: config.policy.version, class_number: 1 }),
       /MEMBERSHIP_LOCKED/,
     );
-    await api('enroll', { ...consent, policy_version: config.policy.version, class_number: 2 });
+    await api('enroll', { ...consent, class_number: 2 });
     assert.equal((await call('me')).enrollment_current, true);
   });
   await ok('학년도 변경 후 기존 소속으로 새 학년도 정보 조회 불가', async () => {

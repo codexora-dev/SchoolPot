@@ -16,8 +16,6 @@ const body = {
   class_number: 2,
   policy_version: 3,
   age_14_confirmed: true,
-  privacy_consent: true,
-  overseas_consent: true,
 };
 async function run(errorAt?: string, errorCode = 'AGE_REQUIRED') {
   Deno.env.set('SUPABASE_URL', 'https://project.example');
@@ -71,7 +69,7 @@ async function run(errorAt?: string, errorCode = 'AGE_REQUIRED') {
     globalThis.fetch = original;
   }
 }
-Deno.test('동의·연령·정책 검증 실패 시 Auth 사용자를 만들지 않는다', async () => {
+Deno.test('서버 검증 실패 시 Auth 사용자를 만들지 않는다', async () => {
   for (const code of [
     'AGE_REQUIRED',
     'CONSENT_REQUIRED',
@@ -85,7 +83,7 @@ Deno.test('동의·연령·정책 검증 실패 시 Auth 사용자를 만들지 
     assert(!calls.some((c) => c.path.startsWith('/auth/')));
   }
 });
-Deno.test('회원가입은 검증 뒤 Auth·복구 해시·소속 동의 순서로 기록한다', async () => {
+Deno.test('회원가입은 동의 플래그 없이 Auth·복구 해시·소속 순서로 기록한다', async () => {
   const { response, calls } = await run();
   assert(response.status === 201);
   const result = await response.json();
@@ -100,6 +98,8 @@ Deno.test('회원가입은 검증 뒤 Auth·복구 해시·소속 동의 순서�
   );
   assert(!('password' in payload));
   assert(!('recovery_code' in payload));
+  assert(!('privacy_consent' in payload));
+  assert(!('overseas_consent' in payload));
 });
 Deno.test('Auth 생성 후 소속 기록 실패 시 부분 생성 계정을 삭제한다', async () => {
   const { response, calls } = await run('set_membership', 'STALE_POLICY');

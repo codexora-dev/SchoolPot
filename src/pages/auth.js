@@ -51,7 +51,7 @@ export function profilePage(state, refresh, params = new URLSearchParams()) {
         '학년·반을 임의 변경할 수 없어요. 잘못 등록했으면 관리자에게 정정을 요청해 주세요.',
       ),
       state.me?.enrollment_current !== true
-        ? link('소속·동의 등록', '#/enrollment', 'button secondary')
+        ? link('학년·반 선택', '#/enrollment', 'button secondary')
         : null,
     ),
     el(

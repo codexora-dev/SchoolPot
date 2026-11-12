@@ -6,6 +6,13 @@ test('데스크톱·모바일 화면 캡처와 콘솔 오류 확인', async ({ p
   await page.goto('/');
   await expect(page.locator('.hero')).toBeVisible();
   await page.screenshot({ path: 'docs/screenshots/home-desktop.png', fullPage: true });
+  await page.getByRole('button', { name: '다크 모드로 전환', exact: true }).click();
+  await page.screenshot({ path: 'docs/screenshots/home-dark.png', fullPage: true });
+  await page.getByRole('button', { name: '라이트 모드로 전환', exact: true }).click();
+  await page.goto('/#/signup');
+  await expect(page.getByRole('heading', { name: '우리 학교 이야기, 함께해요' })).toBeVisible();
+  await page.screenshot({ path: 'docs/screenshots/signup-desktop.png', fullPage: true });
+  await page.goto('/');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: 'docs/screenshots/home-mobile.png', fullPage: true });
   await page.goto('/#/signup');

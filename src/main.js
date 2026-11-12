@@ -5,13 +5,13 @@ import { call } from './services/community.js';
 import { layout, pageTitle } from './components/layout.js';
 import { feedbackPage } from './pages/feedback.js';
 import { loadBoards } from './services/management.js';
-import { boards, setBoards } from './config/site.js';
+import { setBoards } from './config/site.js';
 import { homePage } from './pages/home.js';
 import { authPage, profilePage } from './pages/auth.js';
 import { boardPage, postPage, writePage } from './pages/community.js';
 import { notificationsPage, noticesPage, neisPage, assessmentsPage } from './pages/school.js';
 import { adminPage } from './pages/admin.js';
-import { icon } from './components/icons.js';
+import { boardsPage } from './pages/boards.js';
 import { showSitePopups } from './components/site-popups.js';
 import { enrollmentPage, privacyPage } from './pages/enrollment.js';
 let storedTheme;
@@ -102,9 +102,9 @@ function gate() {
     );
   if (state.me?.enrollment_current !== true)
     return empty(
-      '본인 소속과 동의를 확인해 주세요',
-      '학년·반 및 개인정보 동의를 등록한 뒤 이용할 수 있어요.',
-      link('소속·동의 등록', '#/enrollment', 'button primary'),
+      '우리 반을 선택해 주세요',
+      '학년과 반만 선택하면 학교생활을 시작할 수 있어요.',
+      link('학년·반 선택', '#/enrollment', 'button primary'),
     );
   return null;
 }
@@ -171,7 +171,7 @@ async function render() {
           el(
             'p',
             {},
-            '만 14세 이상인 분이 아이디·8자 이상 비밀번호·본인 학년과 반을 입력하고 필수 동의 후 가입할 수 있어요. 이메일 인증이나 재학생 인증 신청은 받지 않으며, 연령·소속은 본인 신고에 따릅니다.',
+            '만 14세 이상인 분이 아이디·8자 이상 비밀번호·본인 학년과 반을 입력하고 가입할 수 있어요. 이메일 인증이나 재학생 인증 신청은 받지 않으며, 연령·소속은 본인 신고에 따릅니다.',
           ),
           el('h2', {}, '안전한 커뮤니티'),
           el(
@@ -183,7 +183,7 @@ async function render() {
           el(
             'p',
             {},
-            '실제 이메일, 학생증, 학번, 생년월일은 받지 않아요. 닉네임은 프로필에서 바꿀 수 있고 소속 정정은 관리자에게 요청합니다. 수행평가는 등록된 본인 반에만 공유합니다. 탈퇴하면 소속·동의와 계정에 연결된 작성 내용도 삭제합니다.',
+            '실제 이메일, 학생증, 학번, 생년월일은 받지 않아요. 닉네임은 프로필에서 바꿀 수 있고 소속 정정은 관리자에게 요청합니다. 수행평가는 등록된 본인 반에만 공유합니다. 탈퇴하면 소속 정보와 계정에 연결된 작성 내용도 삭제합니다.',
           ),
           link('개인정보 처리방침·외부 문의', '#/privacy', 'button secondary'),
           el('h2', {}, '계정과 복구 코드'),
@@ -195,52 +195,10 @@ async function render() {
         ),
       );
     else if (route === '/boards')
-      page = state.boardError
-        ? errorBox(state.boardError, async () => {
-            await refresh();
-            await render();
-          })
-        : el(
-            'section',
-            {},
-            pageTitle('COMMUNITY', '우리 학교 게시판', '어떤 이야기를 나누고 싶나요?'),
-            link('건의·오류 제보', '#/feedback', 'button secondary'),
-            !boards.length
-              ? empty('운영 중인 게시판이 없어요', '잠시 후 다시 확인해 주세요.')
-              : null,
-            el(
-              'div',
-              { class: 'boards-grid' },
-              ...boards
-                .filter((b) => b.is_active !== false)
-                .map(
-                  (b) =>
-                    link('', `#/board/${b.id}`, 'panel board-tile').appendChild(
-                      el(
-                        'div',
-                        {},
-                        el(
-                          'span',
-                          { class: 'quick-icon' },
-                          icon(
-                            {
-                              free: 'chat',
-                              anonymous: 'anonymous',
-                              questions: 'question',
-                              study: 'book',
-                              lost: 'search',
-                              clubs: 'club',
-                              polls: 'poll',
-                            }[b.id],
-                          ),
-                        ),
-                        el('h2', {}, b.name),
-                        el('p', { class: 'muted' }, b.description),
-                      ),
-                    ).parentNode,
-                ),
-            ),
-          );
+      page = boardsPage(state, async () => {
+        await refresh();
+        await render();
+      });
     else if (route === '/profile' && state.user)
       page = profilePage(
         state,

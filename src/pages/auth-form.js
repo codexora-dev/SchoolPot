@@ -137,6 +137,14 @@ export async function authPage(mode, refresh) {
         )
       : null,
     signup ? enrollmentFields(setup) : null,
+    signup
+      ? el(
+          'label',
+          { class: 'checkbox age-check' },
+          el('input', { type: 'checkbox', name: 'age_14_confirmed', required: true }),
+          '만 14세 이상입니다.',
+        )
+      : null,
     !signup && !reset && !update
       ? el(
           'div',
@@ -163,7 +171,7 @@ export async function authPage(mode, refresh) {
       {
         type: 'submit',
         class: 'button primary',
-        disabled: signup && (!setup.policy.is_ready || !setup.counts.some(Boolean)),
+        disabled: signup && !setup.counts.some(Boolean),
       },
       signup ? '회원가입' : reset ? '비밀번호 재설정' : update ? '비밀번호 변경' : '로그인',
     ),
@@ -178,5 +186,28 @@ export async function authPage(mode, refresh) {
       !signup && !reset && !update ? link('비밀번호를 잊으셨나요?', '#/reset') : null,
     ),
   );
-  return el('section', { class: 'auth-wrap' }, form);
+  return el(
+    'section',
+    { class: 'auth-wrap modern-auth' },
+    form,
+    el(
+      'aside',
+      { class: 'auth-companion' },
+      el('span', { class: 'brand-mark' }, icon('cap', 30)),
+      el('p', { class: 'eyebrow' }, 'YOUR EVERYDAY CAMPUS'),
+      el('h2', {}, '학교생활의 모든 순간,', el('br'), '스쿨팟에서.'),
+      el(
+        'p',
+        {},
+        '친구들의 이야기부터 우리 반의 중요한 일정까지. 학교에서 필요한 소식을 편하게 만나보세요.',
+      ),
+      ...[
+        ['chat', '작은 일상도 편하게 나누는 게시판'],
+        ['check', '놓치지 않고 챙기는 우리 반 수행평가'],
+        ['meal', '매일 확인하는 급식과 학교 일정'],
+      ].map(([name, text]) =>
+        el('div', { class: 'auth-feature' }, icon(name, 19), el('span', {}, text)),
+      ),
+    ),
+  );
 }

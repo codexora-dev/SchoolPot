@@ -84,8 +84,6 @@ export async function handleAccount(req: Request) {
         class_number: body.class_number,
         policy_version: body.policy_version,
         age_14_confirmed: body.age_14_confirmed,
-        privacy_consent: body.privacy_consent,
-        overseas_consent: body.overseas_consent,
       };
       await gateway("validate_signup", enrollment);
       const { data, error } = await admin.auth.admin.createUser({

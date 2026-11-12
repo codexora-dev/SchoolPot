@@ -10,7 +10,7 @@ const schoolErrors = {
   STALE_POLICY: '개인정보 안내가 변경됐어요. 새로고침한 뒤 다시 확인해 주세요.',
   STALE_CLASS_SETTINGS: '학급 설정이 변경됐어요. 새로고침한 뒤 다시 선택해 주세요.',
   CLASS_INVALID: '운영 중인 학년·반을 선택해 주세요.',
-  MEMBERSHIP_REQUIRED: '본인 학년·반과 필수 동의를 등록해 주세요.',
+  MEMBERSHIP_REQUIRED: '본인 학년·반을 선택해 주세요.',
   MEMBERSHIP_LOCKED: '소속 변경은 관리자에게 정정을 요청해 주세요.',
   STALE_MEMBERSHIP: '소속 정보가 변경됐어요. 목록을 다시 불러와 주세요.',
   CLASS_IN_USE: '소속 회원이 있는 반은 없앨 수 없어요. 먼저 소속을 정정해 주세요.',
