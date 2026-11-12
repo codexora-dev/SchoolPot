@@ -11,7 +11,11 @@
 - DB 적용 후 반 수 [7,7,7], 기존 수행평가 1건, QA 계정 잔여 0건, RLS 미설정 private 테이블 0개. accounts Edge v4 ACTIVE, verify_jwt=false는 기존의 공개 가입 경로이며 내부 서비스 게이트를 유지한다.
 - Security Advisor 기존 INFO/WARN은 security.md의 설명과 같다. 문의 이메일 추가와 동의 없는 가입 구조가 모든 법적 운영 검토 완료를 의미하지 않는다.
 
-공개 Pages 배포/브라우저 최종 결과는 확인 후 아래에 추가한다.
+최종 로컬 Playwright: 45개 통과, 실제 서비스 opt-in 2개는 기본 실행에서 제외했다. 실제 account-live는 별도로 로컬 UI/공개 UI에서 각각 1개 통과했다.
+
+프론트엔드 커밋 c57891ef9cfdb1d7ea02dc4378ee5575cffc8afd의 [Pages 배포](https://github.com/codexora-dev/SchoolPot/actions/runs/43237125663)와 [Checks](https://github.com/codexora-dev/SchoolPot/actions/runs/43237125562)가 모두 success다. 공개 HTML의 빌드 ID와 JS/CSS 2개 HTTP/MIME을 check-deployment.mjs로 검증했다.
+
+[공개 사이트](https://codexora-dev.github.io/SchoolPot/)의 실제 Chromium 1440/390px에서 홈·게시판·가입 화면, 가로 넘침 없음, 개인정보/국외 처리 동의 입력 없음, 연령 확인 입력 1개, 회원가입 버튼 활성화, 실제 3학년 7반 선택, 문의 mailto, 비회원 수행평가 접근 제한을 확인했다. JavaScript pageerror 0개다. 공개 URL을 대상으로 자동로그인 선택·해제·새 세션 복원·잘못된 비밀번호 탈퇴 거절·정상 탈퇴·삭제 후 로그인 실패도 통과했다. 공개 글 없이 임시 계정만 사용하고 삭제했다.
 
 | 최신 검사                                             | 통과 |
 | ----------------------------------------------------- | ---: |
