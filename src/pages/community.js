@@ -50,7 +50,7 @@ export function postCard(p) {
     ),
   );
 }
-export async function boardPage(route, params) {
+export async function boardPage(route, params, state = {}) {
   const board = route.startsWith('/board/') ? route.split('/')[2] : '';
   const popular = route === '/popular';
   const query = params.get('q') || '';
@@ -58,6 +58,7 @@ export async function boardPage(route, params) {
   const period = params.get('period') || '';
   const offset = Number(params.get('offset')) || 0;
   const b = boards.find((b) => b.id === board);
+  const writable = !b || b.can_post || state.me?.is_admin;
   if (board && !b) throw new Error('존재하지 않는 게시판이에요.');
   const filters = el(
     'form',
@@ -103,8 +104,15 @@ export async function boardPage(route, params) {
       'COMMUNITY',
       b?.name || (popular ? '지금 인기 있는 이야기' : '이야기 검색'),
       b?.description || (query ? `“${query}” 검색 결과` : '친구들의 관심이 모이는 이야기'),
-      link('＋ 글쓰기', `#/write?board=${board || 'free'}`, 'button primary'),
+      writable ? link('＋ 글쓰기', `#/write?board=${board || ''}`, 'button primary') : null,
     ),
+    b && !b.can_post
+      ? el(
+          'p',
+          { class: 'panel hint', role: 'status' },
+          '읽기 전용 게시판이에요. 기존 이야기를 읽을 수 있어요.',
+        )
+      : null,
     filters,
     el(
       'div',
@@ -114,7 +122,9 @@ export async function boardPage(route, params) {
         : empty(
             '아직 이야기가 없어요',
             '첫 번째 이야기를 남겨보세요.',
-            link('글 쓰러 가기', `#/write?board=${board || 'free'}`, 'button primary'),
+            writable
+              ? link('글 쓰러 가기', `#/write?board=${board || ''}`, 'button primary')
+              : null,
           ),
     ),
     el(
@@ -201,10 +211,18 @@ export async function postPage(id, state, reload, params) {
     id,
     comments_offset: Number(params.get('comments_offset')) || 0,
   });
-  const b = boards.find((b) => b.id === p.board_id);
+  const b = boards.find((b) => b.id === p.board_id) || { name: p.board_name || '게시판' };
+  const interactive = p.can_interact !== false;
+  const interactionButton = (text, action, cls) => {
+    const node = button(text, action, cls);
+    node.disabled = !interactive;
+    return node;
+  };
   let parent = '';
   const act = async (action, payload) => {
     try {
+      if (!interactive && ['like', 'vote'].includes(action))
+        throw new Error('읽기 전용 게시판이에요.');
       await call(action, payload);
       await reload();
     } catch (err) {
@@ -303,12 +321,12 @@ export async function postPage(id, state, reload, params) {
       el(
         'div',
         { class: 'comment-actions' },
-        button(
+        interactionButton(
           `${c.liked ? '♥' : '♡'} ${c.likes}`,
           () => act('like', { kind: 'comment', id: c.id, liked: !c.liked }),
           'text-button',
         ),
-        !c.parent_id
+        interactive && !c.parent_id
           ? button(
               '답글',
               () => {
@@ -329,7 +347,7 @@ export async function postPage(id, state, reload, params) {
               'text-button',
             )
           : null,
-        c.is_mine ? button('수정', () => editComment(c), 'text-button') : null,
+        c.is_mine && interactive ? button('수정', () => editComment(c), 'text-button') : null,
         c.is_mine
           ? button(
               '삭제',
@@ -378,7 +396,7 @@ export async function postPage(id, state, reload, params) {
             { class: 'poll' },
             el('h3', {}, '친구들의 생각은?'),
             ...p.poll.options.map((o) =>
-              button(
+              interactionButton(
                 `${o.label}　${o.votes}표`,
                 () => act('vote', { post_id: id, option_id: o.id }),
                 `poll-option ${p.poll.voted ? 'voted' : ''}`,
@@ -394,12 +412,12 @@ export async function postPage(id, state, reload, params) {
       el(
         'div',
         { class: 'actions' },
-        button(
+        interactionButton(
           `${p.liked ? '♥' : '♡'} 공감 ${p.likes}`,
           () => act('like', { kind: 'post', id, liked: !p.liked }),
           'button secondary',
         ),
-        p.is_mine ? link('수정', `#/write?id=${id}`, 'button secondary') : null,
+        p.is_mine && interactive ? link('수정', `#/write?id=${id}`, 'button secondary') : null,
         p.is_mine
           ? button('삭제', () =>
               confirmDialog('게시글을 삭제할까요?', async () => {
@@ -446,7 +464,9 @@ export async function postPage(id, state, reload, params) {
             )
           : null,
       ),
-      commentForm,
+      interactive
+        ? commentForm
+        : el('p', { class: 'hint' }, '읽기 전용 게시판에서는 댓글·공감·투표를 사용할 수 없어요.'),
     ),
   );
 }
@@ -454,6 +474,13 @@ export async function writePage(params, state) {
   const id = params.get('id');
   const p = id ? await call('get_post', { id }) : null;
   if (p && !p.is_mine) throw new Error('본인의 글만 수정할 수 있어요.');
+  const writable = boards.filter((b) => b.can_post || state.me?.is_admin);
+  if (p?.can_interact === false || (!p && !writable.length))
+    return empty(
+      '지금은 글을 쓸 수 없어요',
+      '운영 중인 게시판을 확인해 주세요.',
+      link('게시판 보기', '#/boards', 'button primary'),
+    );
   const draftKey = `schoolpot-draft:${state.user.id}`;
   let draft = {};
   try {
@@ -486,7 +513,7 @@ export async function writePage(params, state) {
           };
           if (
             !id &&
-            data.board === 'polls' &&
+            boards.find((b) => b.id === data.board)?.kind === 'poll' &&
             (payload.options.length < 2 || payload.options.length > 6)
           )
             throw new Error('투표 항목은 2~6개 입력해 주세요.');
@@ -507,12 +534,22 @@ export async function writePage(params, state) {
       el(
         'select',
         { name: 'board', disabled: Boolean(id), 'aria-label': '게시판' },
-        ...boards.map((b) =>
+        ...(p
+          ? [
+              {
+                id: p.board_id,
+                name: p.board_name || boards.find((b) => b.id === p.board_id)?.name || '게시판',
+              },
+            ]
+          : writable
+        ).map((b) =>
           el(
             'option',
             {
               value: b.id,
-              selected: b.id === (source.board_id || source.board || params.get('board') || 'free'),
+              selected:
+                b.id ===
+                (source.board_id || source.board || params.get('board') || writable[0]?.id),
             },
             b.name,
           ),
@@ -580,12 +617,15 @@ export async function writePage(params, state) {
   const boardSelect = form.querySelector('[name=board]');
   const updateBoardFields = () => {
     const options = form.querySelector('[name=options]');
-    const isPoll = boardSelect.value === 'polls';
+    const isPoll =
+      boards.find((b) => b.id === boardSelect.value)?.kind === 'poll' || Boolean(p?.poll);
     options.closest('.field').hidden = !isPoll;
     options.disabled = !isPoll || Boolean(id);
     const anonymous = form.querySelector('[name=anonymous]');
-    anonymous.disabled = Boolean(id) || boardSelect.value === 'anonymous';
-    if (boardSelect.value === 'anonymous') anonymous.checked = true;
+    anonymous.disabled =
+      Boolean(id) || boards.find((b) => b.id === boardSelect.value)?.kind === 'anonymous';
+    if (boards.find((b) => b.id === boardSelect.value)?.kind === 'anonymous')
+      anonymous.checked = true;
   };
   boardSelect.addEventListener('change', updateBoardFields);
   updateBoardFields();

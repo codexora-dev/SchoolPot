@@ -871,3 +871,45 @@
     min-width: calc(50% - 10px);
   }
 }
+.management-list {
+  display: grid;
+  gap: 16px;
+  margin-block: 18px;
+}
+.management-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.management-card > div {
+  min-width: 0;
+}
+.management-card h3,
+.feedback-card h3 {
+  margin-block: 12px 6px;
+  overflow-wrap: anywhere;
+}
+.management-card p,
+.feedback-card p,
+dialog .preserve {
+  overflow-wrap: anywhere;
+}
+.feedback-reply {
+  margin-block: 18px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--surface-soft);
+  border-left: 3px solid var(--green);
+}
+.status-chip {
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--surface-soft);
+  font-size: 12px;
+  color: var(--muted);
+}
+.feedback-card > .button {
+  margin-top: 12px;
+}

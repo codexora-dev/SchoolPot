@@ -113,7 +113,10 @@ export async function homePage(state) {
             'div',
             { class: 'feed-tabs' },
             link('전체', '#/search', 'feed-tab selected'),
-            ...boards.slice(0, 4).map((b) => link(b.name, `#/board/${b.id}`, 'feed-tab')),
+            ...boards
+              .filter((b) => b.is_active !== false)
+              .slice(0, 4)
+              .map((b) => link(b.name, `#/board/${b.id}`, 'feed-tab')),
           ),
           el(
             'div',

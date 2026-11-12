@@ -3,7 +3,9 @@ import { el, link, empty, errorBox, toast } from './lib/dom.js';
 import { client, configured } from './services/api.js';
 import { call } from './services/community.js';
 import { layout, pageTitle } from './components/layout.js';
-import { boards } from './config/site.js';
+import { feedbackPage } from './pages/feedback.js';
+import { loadBoards } from './services/management.js';
+import { boards, setBoards } from './config/site.js';
 import { homePage } from './pages/home.js';
 import { authPage, profilePage } from './pages/auth.js';
 import { boardPage, postPage, writePage } from './pages/community.js';
@@ -39,7 +41,16 @@ async function refresh() {
   } catch (err) {
     authError = err.message;
   }
+  let catalog = [];
+  let boardError = null;
+  try {
+    if (client) catalog = await loadBoards(Boolean(me?.is_admin));
+  } catch (err) {
+    boardError = err.message;
+  }
   if (version !== sessionVersion) return;
+  setBoards(catalog);
+  state.boardError = boardError;
   Object.assign(state, { user, me, authError });
 }
 async function logout() {
@@ -59,6 +70,7 @@ async function logout() {
   state.user = null;
   state.me = null;
   state.authError = null;
+  await refresh();
   location.hash = '/';
   await render();
 }
@@ -161,41 +173,52 @@ async function render() {
         ),
       );
     else if (route === '/boards')
-      page = el(
-        'section',
-        {},
-        pageTitle('COMMUNITY', '우리 학교 게시판', '어떤 이야기를 나누고 싶나요?'),
-        el(
-          'div',
-          { class: 'boards-grid' },
-          ...boards.map(
-            (b) =>
-              link('', `#/board/${b.id}`, 'panel board-tile').appendChild(
-                el(
-                  'div',
-                  {},
-                  el(
-                    'span',
-                    { class: 'quick-icon' },
-                    icon(
-                      {
-                        free: 'chat',
-                        anonymous: 'anonymous',
-                        questions: 'question',
-                        study: 'book',
-                        lost: 'search',
-                        clubs: 'club',
-                        polls: 'poll',
-                      }[b.id],
-                    ),
-                  ),
-                  el('h2', {}, b.name),
-                  el('p', { class: 'muted' }, b.description),
+      page = state.boardError
+        ? errorBox(state.boardError, async () => {
+            await refresh();
+            await render();
+          })
+        : el(
+            'section',
+            {},
+            pageTitle('COMMUNITY', '우리 학교 게시판', '어떤 이야기를 나누고 싶나요?'),
+            link('건의·오류 제보', '#/feedback', 'button secondary'),
+            !boards.length
+              ? empty('운영 중인 게시판이 없어요', '잠시 후 다시 확인해 주세요.')
+              : null,
+            el(
+              'div',
+              { class: 'boards-grid' },
+              ...boards
+                .filter((b) => b.is_active !== false)
+                .map(
+                  (b) =>
+                    link('', `#/board/${b.id}`, 'panel board-tile').appendChild(
+                      el(
+                        'div',
+                        {},
+                        el(
+                          'span',
+                          { class: 'quick-icon' },
+                          icon(
+                            {
+                              free: 'chat',
+                              anonymous: 'anonymous',
+                              questions: 'question',
+                              study: 'book',
+                              lost: 'search',
+                              clubs: 'club',
+                              polls: 'poll',
+                            }[b.id],
+                          ),
+                        ),
+                        el('h2', {}, b.name),
+                        el('p', { class: 'muted' }, b.description),
+                      ),
+                    ).parentNode,
                 ),
-              ).parentNode,
-          ),
-        ),
-      );
+            ),
+          );
     else if (route === '/profile' && state.user)
       page = profilePage(state, async () => {
         await refresh();
@@ -204,10 +227,11 @@ async function render() {
     else if (!publicRoutes.includes(route) && gate())
       page = el('section', { class: 'panel gate' }, gate());
     else if (route.startsWith('/board/') || route === '/search' || route === '/popular')
-      page = await boardPage(route, params);
+      page = await boardPage(route, params, state);
     else if (route.startsWith('/post/'))
       page = await postPage(route.split('/')[2], state, render, params);
     else if (route === '/write') page = await writePage(params, state);
+    else if (route === '/feedback') page = await feedbackPage(params, render);
     else if (route === '/notifications') page = await notificationsPage(render);
     else if (route === '/notices') page = await noticesPage(state, render);
     else if (route === '/meals' || route === '/schedule')

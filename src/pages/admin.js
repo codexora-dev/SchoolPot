@@ -1,10 +1,14 @@
 import { el, field, button, link, toast, empty, date } from '../lib/dom.js';
 import { pageTitle } from '../components/layout.js';
 import { call } from '../services/community.js';
+import { boardManager } from './admin-boards.js';
+import { feedbackManager } from './feedback.js';
 import { popupManager } from './admin-popups.js';
 export async function adminPage(params, reload) {
   const tab = params.get('tab') || 'overview';
   const main = el('div');
+  if (tab === 'boards') main.append(await boardManager(reload));
+  if (tab === 'feedback') main.append(await feedbackManager(params, reload));
   if (tab === 'popups') main.append(await popupManager(reload));
   const action = async (name, data) => {
     try {
@@ -26,6 +30,7 @@ export async function adminPage(params, reload) {
           posts: '게시글',
           comments: '댓글',
           reports: '미처리 신고',
+          feedback: '미처리 문의',
         }).map(([key, label]) =>
           el(
             'div',
@@ -202,6 +207,8 @@ export async function adminPage(params, reload) {
       { class: 'tabs' },
       ...Object.entries({
         overview: '현황',
+        boards: '게시판 관리',
+        feedback: '건의·오류 관리',
         members: '회원 관리',
         reports: '신고 관리',
         notice: '공지 등록',

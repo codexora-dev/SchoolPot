@@ -42,12 +42,15 @@ export function layout(state, onTheme, onLogout) {
       nav('홈', '/', 'home'),
       nav('인기글', '/popular', 'trend'),
       el('p', { class: 'nav-label' }, '커뮤니티'),
-      ...boards.map((b) => nav(b.name, '/board/' + b.id, boardIcons[b.id])),
+      ...boards
+        .filter((b) => b.is_active !== false)
+        .map((b) => nav(b.name, '/board/' + b.id, boardIcons[b.id])),
       el('p', { class: 'nav-label' }, '학교생활'),
       nav('급식', '/meals', 'meal'),
       nav('학사일정', '/schedule', 'calendar'),
       nav('수행평가', '/assessments', 'check'),
       nav('공지사항', '/notices', 'bell'),
+      nav('건의·오류 제보', '/feedback', 'chat'),
       state.me?.is_admin ? nav('관리자', '/admin', 'shield') : null,
     ),
     el(
@@ -141,6 +144,7 @@ export function layout(state, onTheme, onLogout) {
             el('small', {}, schoolName + ' · 나의 스쿨팟'),
           ),
           link('프로필 설정', '#/profile', 'account-item'),
+          link('건의·오류 제보', '#/feedback', 'account-item'),
           state.me?.is_admin ? link('관리자 대시보드', '#/admin', 'account-item') : null,
           button('로그아웃', onLogout, 'account-item logout-item'),
         ),

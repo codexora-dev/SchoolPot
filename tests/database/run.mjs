@@ -40,6 +40,15 @@ await db.exec(
     'utf8',
   ),
 );
+await db.exec(
+  await readFile(
+    new URL(
+      '../../supabase/migrations/20261112121308_board_management_feedback.sql',
+      import.meta.url,
+    ),
+    'utf8',
+  ),
+);
 for (const [name, id] of Object.entries(users))
   await db.query(
     'insert into auth.users(id,email_confirmed_at,deleted_at,is_anonymous,email,raw_app_meta_data) values($1,$2,null,$3,$4,$5)',
@@ -574,6 +583,220 @@ await ok('팝업 작업 감사 기록 및 관리자 삭제', async () => {
     await popupAdmin('delete', { id: p.id, revision: p.revision });
   assert.deepEqual(await publicPopups(), []);
   assert.ok((await call('admin_audit')).some((log) => log.action === 'popup_delete'));
+});
+async function management(name, action, payload = {}) {
+  const queries = {
+    manage_boards: 'select public.manage_boards($1,$2::jsonb) result',
+    feedback: 'select public.feedback($1,$2::jsonb) result',
+  };
+  return (await db.query(queries[name], [action, JSON.stringify(payload)])).rows[0].result;
+}
+const boardAdmin = (action, payload) => management('manage_boards', action, payload);
+const feedback = (action, payload) => management('feedback', action, payload);
+const catalog = async () => (await db.query('select public.board_catalog() result')).rows[0].result;
+let managedPost, feedbackId;
+const newBoard = {
+  id: 'test-board',
+  name: '테스트 게시판',
+  description: '설명',
+  position: 1,
+  kind: 'anonymous',
+  is_active: true,
+  can_post: true,
+};
+await ok('공개 게시판 메타데이터와 비회원 관리·문의 차단', async () => {
+  await as('', 'anon');
+  assert.equal((await catalog()).length, 7);
+  await denied(() => boardAdmin('list'), /permission denied/);
+  await denied(() => feedback('mine'), /permission denied/);
+});
+await ok('일반 회원 관리자 게시판·문의 API 차단', async () => {
+  await as('b');
+  await denied(() => boardAdmin('create', { ...newBoard, is_admin: true }), /FORBIDDEN/);
+  await denied(() => feedback('admin_list', { role: 'admin' }), /FORBIDDEN/);
+  await denied(() => feedback('admin_update', { is_admin: true }), /FORBIDDEN/);
+  await denied(() => db.query('select * from private.feedback'), /permission denied/);
+  await denied(
+    () => db.query("select private.check_board_write('free',true)"),
+    /permission denied/,
+  );
+});
+await ok('관리자 게시판 추가·이름·설명·순서 변경', async () => {
+  await as('admin');
+  await boardAdmin('create', newBoard);
+  assert.equal((await catalog())[0].id, newBoard.id);
+  await boardAdmin('save', { ...newBoard, revision: 1, name: '변경한 게시판', kind: 'general' });
+  const b = (await boardAdmin('list')).find((b) => b.id === newBoard.id);
+  assert.equal(b.revision, 2);
+  assert.equal(b.kind, 'anonymous');
+  await denied(() => boardAdmin('save', { ...newBoard, revision: 1 }), /STALE_BOARD/);
+});
+await ok('사용자 정의 익명 게시판도 서버에서 익명 강제', async () => {
+  await as('b');
+  managedPost = (
+    await call('save_post', {
+      board: newBoard.id,
+      title: '게시판 관리 검증',
+      body: '본문',
+      anonymous: false,
+    })
+  ).id;
+  const p = await call('get_post', { id: managedPost });
+  assert.equal(p.anonymous, true);
+  assert.equal(p.author, '익명');
+  assert.equal(JSON.stringify(p).includes(users.b), false);
+  await call('save_comment', { post_id: managedPost, body: '댓글' });
+});
+await ok('읽기 전용 게시판의 글·댓글·공감·투표 API 우회 차단', async () => {
+  await as('admin');
+  await boardAdmin('save', { ...newBoard, revision: 2, can_post: false });
+  await as('b');
+  assert.equal((await call('get_post', { id: managedPost })).can_interact, false);
+  const c = (await call('get_post', { id: managedPost })).replies[0];
+  for (const [action, payload] of [
+    ['save_post', { board: newBoard.id, title: '우회 시도', body: '본문' }],
+    ['save_post', { id: managedPost, board: 'free', title: '수정 우회', body: '본문' }],
+    ['save_comment', { post_id: managedPost, body: '댓글 우회' }],
+    ['save_comment', { id: c.id, body: '수정 우회' }],
+    ['like', { kind: 'post', id: managedPost, liked: true }],
+    ['like', { kind: 'comment', id: c.id, liked: true }],
+    ['vote', { post_id: managedPost }],
+  ])
+    await denied(() => call(action, payload), /BOARD_CLOSED/);
+});
+await ok('숨긴 게시판은 공개 메타데이터·검색·타인 글 조회에서 제외', async () => {
+  await as('admin');
+  await boardAdmin('save', { ...newBoard, revision: 3, is_active: false, can_post: false });
+  await as('', 'anon');
+  assert.equal(
+    (await catalog()).some((b) => b.id === newBoard.id),
+    false,
+  );
+  await as('a');
+  assert.equal((await call('list_posts', { board: newBoard.id })).length, 0);
+  await denied(() => call('get_post', { id: managedPost }), /NOT_FOUND/);
+  await as('b');
+  assert.equal((await call('get_post', { id: managedPost })).is_mine, true);
+});
+await ok('기존 글이 있는 게시판 삭제 거절 및 본인 글 삭제 후 빈 게시판 삭제', async () => {
+  await as('admin');
+  await denied(() => boardAdmin('delete', { id: newBoard.id, revision: 4 }), /BOARD_HAS_POSTS/);
+  await as('b');
+  await call('delete_post', { id: managedPost });
+  await as('admin');
+  await boardAdmin('delete', { id: newBoard.id, revision: 4 });
+  assert.equal(
+    (await boardAdmin('list')).some((b) => b.id === newBoard.id),
+    false,
+  );
+});
+await ok('사용자 정의 투표 게시판에서 투표 생성 및 참여', async () => {
+  await as('admin');
+  await boardAdmin('create', { ...newBoard, id: 'test-poll', kind: 'poll' });
+  await as('b');
+  const p = (
+    await call('save_post', {
+      board: 'test-poll',
+      title: '새 투표',
+      body: '내용',
+      options: ['하나', '둘'],
+    })
+  ).id;
+  const data = await call('get_post', { id: p });
+  assert.equal(data.poll.options.length, 2);
+  await call('vote', { post_id: p, option_id: data.poll.options[0].id });
+  await call('delete_post', { id: p });
+  await as('admin');
+  await boardAdmin('delete', { id: 'test-poll', revision: 1 });
+});
+await ok('문의 접수 시 소유자·처리 상태·답변 위조 무시', async () => {
+  await as('a');
+  feedbackId = (
+    await feedback('create', {
+      kind: 'bug',
+      title: '오류 제보',
+      body: '<img src=x onerror=alert(1)>',
+      author_id: users.b,
+      status: 'resolved',
+      admin_reply: '위조 답변',
+    })
+  ).id;
+  const f = (await feedback('mine', { id: feedbackId }))[0];
+  assert.equal(f.status, 'new');
+  assert.equal(f.admin_reply, '');
+  assert.equal(f.author_id, undefined);
+});
+await ok('타인의 문의는 ID를 알아도 조회할 수 없다', async () => {
+  await as('b');
+  assert.deepEqual(await feedback('mine', { id: feedbackId, user_id: users.a }), []);
+});
+await ok('관리자 문의 필터·답변·상태 처리 및 작성자 알림', async () => {
+  await as('admin');
+  const f = (await feedback('admin_list', { status: 'new', kind: 'bug' })).find(
+    (f) => f.id === feedbackId,
+  );
+  assert.ok(f);
+  assert.equal(f.author_id, undefined);
+  assert.ok(f.nickname);
+  assert.equal((await call('admin_stats')).feedback, 1);
+  await feedback('admin_update', {
+    id: f.id,
+    revision: f.revision,
+    status: 'resolved',
+    admin_reply: '해결했습니다.',
+  });
+  await denied(
+    () => feedback('admin_update', { id: f.id, revision: f.revision, status: 'closed' }),
+    /STALE_FEEDBACK/,
+  );
+  await as('a');
+  const mine = (await feedback('mine'))[0];
+  assert.equal(mine.status, 'resolved');
+  assert.equal(mine.admin_reply, '해결했습니다.');
+  assert.ok((await call('notifications')).some((n) => n.feedback_id === feedbackId));
+});
+await ok('문의 본문·유형·답변 길이 및 시간당 접수 제한', async () => {
+  await as('b');
+  for (const payload of [
+    { kind: 'invalid', title: '제보', body: '내용' },
+    { kind: 'bug', title: '제보', body: ' ' },
+    { kind: 'bug', title: '제보', body: 'x'.repeat(8001) },
+  ])
+    await denied(() => feedback('create', payload), /check constraint/);
+  for (let i = 0; i < 5; i++)
+    await feedback('create', { kind: 'suggestion', title: '건의사항', body: '내용' });
+  await denied(
+    () => feedback('create', { kind: 'suggestion', title: '초과 접수', body: '내용' }),
+    /RATE_LIMIT/,
+  );
+  await as('admin');
+  const f = (await feedback('admin_list'))[0];
+  await denied(
+    () =>
+      feedback('admin_update', {
+        id: f.id,
+        revision: f.revision,
+        status: 'resolved',
+        admin_reply: 'x'.repeat(4001),
+      }),
+    /check constraint/,
+  );
+});
+await ok('신규 관리 API도 이용 제한·현재 세션을 검증', async () => {
+  await db.exec('reset role');
+  await db.query("update private.profiles set suspended_until=now()+interval '1 day' where id=$1", [
+    users.admin,
+  ]);
+  await as('admin');
+  await denied(() => boardAdmin('list'), /SUSPENDED/);
+  await denied(() => feedback('admin_list'), /SUSPENDED/);
+  await db.exec('reset role');
+  await db.query('update private.profiles set suspended_until=null where id=$1', [users.admin]);
+  await db.query('delete from auth.sessions where user_id=$1', [users.b]);
+  await as('b');
+  await denied(() => feedback('mine'), /AUTH_REQUIRED/);
+  await db.exec('reset role');
+  await db.query('insert into auth.sessions values($1,$1)', [users.b]);
 });
 await ok('탈퇴 후 작성자 연결 제거, 기존 JWT 접근 차단', async () => {
   await db.exec('reset role');
