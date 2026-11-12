@@ -67,4 +67,6 @@ DB 마이그레이션을 원격 적용하고 비회원 조회 200/관리 거절 
 
 원격 스키마 선조사 후 마이그레이션을 적용했다. lint·단위 15개·PGlite DB 61개·Playwright fixture 35개·build를 통과했다. 실제 Supabase API 7개 검사에서는 임시 QA 계정 2개로 문의 격리/답변/알림과 비공개 게시판 CRUD/접근 제한을 검증했다. QA 데이터 잔여 0건, private 전체 RLS 활성화를 확인했다. 실제 방문자에게 테스트 게시판을 공개하지 않았고 운영자 admin 역할이나 기존 글은 변경하지 않았다.
 
-Security Advisor는 의도적인 기본 거부 no policy INFO 25건과 기존 Auth 유출 비밀번호 보호 비활성 WARN 1건이다. 운영 안내는 management.md, 최신 검증은 verification.md에 기록했다. 코드의 main 반영 및 GitHub Pages 최종 배포 검증을 진행한다.
+Security Advisor는 의도적인 기본 거부 no policy INFO 25건과 기존 Auth 유출 비밀번호 보호 비활성 WARN 1건이다. 운영 안내는 management.md, 최신 검증은 verification.md에 기록했다.
+
+원격 main의 파비콘 관련 커밋 4개를 보존해 병합하고 코드 ef72e1e를 main에 반영했다. [CI](https://github.com/codexora-dev/SchoolPot/actions/runs/43218976250)와 [GitHub Pages build/deploy](https://github.com/codexora-dev/SchoolPot/actions/runs/43218976332)가 성공했다. 실제 HTML의 배포 SHA 및 JS/CSS 3개 자산의 HTTP 200/MIME을 확인했다. 공개 사이트의 실제 게시판 메타데이터 7개·건의/오류 링크·비로그인 문의 접근 시 로그인 안내·390px 가로폭과 JavaScript 오류 0건을 브라우저로 확인했다. 사이트: https://codexora-dev.github.io/SchoolPot/ .

@@ -27,7 +27,7 @@ PGlite는 전체 마이그레이션을 새 PostgreSQL DB에 적용하고 권한�
 
 최신 Security Advisor는 기본 거부 RLS의 [no policy INFO](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) 25건과 기존 [유출 비밀번호 보호 비활성 WARN](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) 1건입니다. 필요 없는 허용 정책이나 유료 플랜 변경을 추가하지 않았습니다.
 
-GitHub Pages 배포는 main 반영 후 CI/배포 workflow와 실제 배포 SHA·JS/CSS HTTP 응답·공개 화면을 별도로 확인합니다. 최종 배포 결과는 progress.md에 기록합니다.
+코드 ef72e1e의 GitHub CI와 Pages build/deploy가 성공했습니다. 실제 배포 SHA·JS/CSS 3개 자산의 HTTP 200/MIME을 확인했습니다. 공개 사이트 브라우저에서 실제 게시판 7개·문의 링크·비로그인 접근 안내·390px 가로폭을 확인했고 JavaScript 오류는 0건입니다. 최종 배포 URL과 workflow 링크는 progress.md에 기록했습니다.
 
 ## 이전 팝업 업데이트 검증 이력
 
