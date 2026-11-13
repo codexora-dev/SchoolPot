@@ -10,7 +10,7 @@ export async function privacyPage() {
     pageTitle(
       'PRIVACY',
       '개인정보 처리방침',
-      '가입 전에도 내용을 확인하고 외부 문의 경로를 이용할 수 있어요.',
+      '서비스에서 처리하는 정보와 보유 기준을 안내합니다.',
     ),
     el('div', { class: 'panel' }, privacyContent(setup)),
   );
