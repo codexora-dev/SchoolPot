@@ -8,6 +8,8 @@ lint/build, Vitest 25, PGlite 80, Playwright 54(기본 live 2 제외), npm audit
 
 parse5 AST→허용 태그/속성 DOM 재구성 방식이다. 일반 사용자 게시글/댓글의 HTML 실행을 허용하지 않는다. HTTPS 외부 이미지는 원본 제공처의 공개 접근이 가능해야 하며 이 기능에 파일 업로드/임의 CSS/스크립트 실행은 포함되지 않는다. 신규 parser chunk는 서식 콘텐츠가 있을 때만 로드한다. 공개 빌드의 이미지 CSP 검증은 배포 후 추가한다.
 
+[Pages 43391681688](https://github.com/codexora-dev/SchoolPot/actions/runs/43391681688) / [Checks 43391681759](https://github.com/codexora-dev/SchoolPot/actions/runs/43391681759)가 76190086bc3f3d21bcc7e2523bb0f9361e354d0c에서 모두 success. 공개 HTML 빌드 ID·JS/CSS 9개 HTTP/MIME 검증 통과. tests/integration/rich-content-production.mjs를 공개 URL에 실행해 HTML/Markdown 각각의 실제 CSP·lazy parser 로드·HTTPS 이미지 naturalWidth=1·서식·스크립트/이벤트 제거·390px 폭·JS 오류 0개를 확인했다. 팝업 조회만 브라우저 로컬 fixture로 대체했으며 실제 운영 콘텐츠를 게시하지 않았다. 운영 DB의 롤백 테스트용 공지/팝업 잔여 0건과 RLS 미설정 private 테이블 0건도 확인했다.
+
 ## 2026-11-13 안정성·화면·최적화
 
 테마/토큰 갱신 후 입력·포커스 유지, 오프라인/복구 후 입력 유지, 15초 조회 중단 안내, 홈 공지 부분 실패 후 글 영역 유지/재시도, 진행 중 공감 1회 요청을 실제 Chromium+fixture 응답으로 검증했다. 실제 Supabase 장애나 다수 동시 이용자 부하 테스트를 대체하지 않는다.

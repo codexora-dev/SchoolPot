@@ -8,6 +8,7 @@
 - 원격 notices/site_popups 스키마 조사 후 formatted_announcements 마이그레이션 적용. content_format enum 제약(text/markdown/html), 공개 팝업 응답의 형식, 관리자 저장/검증, 형식 변경 시 revision 증가를 추가했다. 현재 계정·세션·역할·이용 제한·감사·동시 게시 3개 제한·기본 닫기는 유지한다.
 - 로컬 Vitest 25, PGlite 80, Playwright 54(기본 live 2 제외), build 및 lint 통과, npm audit 취약점 0. HTML 실행/스타일 요청 차단과 이미지 naturalWidth, Markdown 표·코드·링크, 작성→미리보기→전송→표시/재편집을 확인했다. DB fixture의 역할 초기화 누락과 테스트의 정적 닫기 아이콘까지 검사한 범위를 수정했고 lint의 Buffer/control regex 지적을 해결했다.
 - 실제 PostgreSQL에서 tests/integration/formatted-rollback.sql을 실행했다. 기존 관리자 역할/임시 JWT·세션 fixture로 public RPC의 공지 3형식·팝업 형식/버전/공개 응답·잘못된 형식 거부를 검증했고 알림 포함 모든 쓰기를 rollback했다. 실제 Auth/PostgREST 인증 테스트와 구분하며 운영 공지/팝업을 테스트 게시하지 않았다. 공개 배포/CSP 검증은 확인 후 추가한다.
+- 최종 배포: 76190086bc3f3d21bcc7e2523bb0f9361e354d0c, Pages 43391681688 / Checks 43391681759 모두 success. 공개 빌드 ID·JS/CSS 9개 HTTP/MIME 검증 및 rich-content-production.mjs의 HTML/Markdown 두 경우 모두 통과했다. 실제 배포 CSP 아래 지연 로딩 parser·HTTPS 이미지 naturalWidth·서식·XSS 제거·모바일 폭·JS 오류 0개를 확인했다. 브라우저 read fixture만 사용해 운영 게시/알림은 생성하지 않았다. DB 테스트용 공지/팝업 잔여 0건, private RLS 누락 0건이며 기존 Advisor INFO 29/WARN 1은 유지한다. 마이그레이션 파일 끝의 빈 줄도 정리했다.
 
 ## 2026-11-13 배포 전 안정성·사용성·초기 전송량 개선
 
