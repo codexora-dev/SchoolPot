@@ -16,6 +16,7 @@ test('데스크톱·모바일 화면 캡처와 콘솔 오류 확인', async ({ p
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: 'docs/screenshots/home-mobile.png', fullPage: true });
   await page.goto('/#/signup');
+  await expect(page.getByRole('button', { name: '회원가입', exact: true })).toBeVisible();
   await page.screenshot({ path: 'docs/screenshots/signup-mobile.png', fullPage: true });
   expect(errors).toEqual([]);
 });

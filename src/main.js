@@ -3,17 +3,31 @@ import { el, link, empty, errorBox, toast } from './lib/dom.js';
 import { client, configured, authStorage } from './services/api.js';
 import { call } from './services/community.js';
 import { layout, pageTitle } from './components/layout.js';
-import { feedbackPage } from './pages/feedback.js';
 import { loadBoards } from './services/management.js';
 import { setBoards } from './config/site.js';
 import { homePage } from './pages/home.js';
-import { authPage, profilePage } from './pages/auth.js';
-import { boardPage, postPage, writePage } from './pages/community.js';
-import { notificationsPage, noticesPage, neisPage, assessmentsPage } from './pages/school.js';
-import { adminPage } from './pages/admin.js';
 import { boardsPage } from './pages/boards.js';
+import { icon } from './components/icons.js';
+import { connectionStatus } from './components/connection-status.js';
 import { showSitePopups } from './components/site-popups.js';
-import { enrollmentPage, privacyPage } from './pages/enrollment.js';
+const feedbackPage = (...args) =>
+  import('./pages/feedback.js').then((m) => m.feedbackPage(...args));
+const authPage = (...args) => import('./pages/auth.js').then((m) => m.authPage(...args));
+const profilePage = (...args) => import('./pages/auth.js').then((m) => m.profilePage(...args));
+const boardPage = (...args) => import('./pages/community.js').then((m) => m.boardPage(...args));
+const postPage = (...args) => import('./pages/community.js').then((m) => m.postPage(...args));
+const writePage = (...args) => import('./pages/community.js').then((m) => m.writePage(...args));
+const notificationsPage = (...args) =>
+  import('./pages/school.js').then((m) => m.notificationsPage(...args));
+const noticesPage = (...args) => import('./pages/school.js').then((m) => m.noticesPage(...args));
+const neisPage = (...args) => import('./pages/school.js').then((m) => m.neisPage(...args));
+const assessmentsPage = (...args) =>
+  import('./pages/school.js').then((m) => m.assessmentsPage(...args));
+const adminPage = (...args) => import('./pages/admin.js').then((m) => m.adminPage(...args));
+const enrollmentPage = (...args) =>
+  import('./pages/enrollment.js').then((m) => m.enrollmentPage(...args));
+const privacyPage = (...args) =>
+  import('./pages/enrollment.js').then((m) => m.privacyPage(...args));
 let storedTheme;
 try {
   storedTheme = localStorage.getItem('schoolpot-theme');
@@ -26,6 +40,21 @@ let recovery = false;
 let sessionVersion = 0;
 function applyTheme() {
   document.documentElement.dataset.theme = state.dark ? 'dark' : 'light';
+  document
+    .querySelector('meta[name=theme-color]')
+    ?.setAttribute('content', state.dark ? '#101d18' : '#176449');
+}
+function toggleTheme(event) {
+  state.dark = !state.dark;
+  applyTheme();
+  try {
+    localStorage.setItem('schoolpot-theme', state.dark ? 'dark' : 'light');
+  } catch {
+    /* theme remains in memory */
+  }
+  const toggle = event.currentTarget;
+  toggle.replaceChildren(icon(state.dark ? 'sun' : 'moon'));
+  toggle.setAttribute('aria-label', state.dark ? '라이트 모드로 전환' : '다크 모드로 전환');
 }
 applyTheme();
 async function refresh() {
@@ -35,7 +64,9 @@ async function refresh() {
     authError = null;
   try {
     if (client) {
-      const { data } = await client.auth.getUser();
+      const { data, error } = await client.auth.getUser();
+      if (error && (!error.status || error.status >= 500))
+        throw new Error('로그인 상태를 확인하지 못했어요. 연결을 확인하고 다시 시도해 주세요.');
       user = data?.user || null;
       if (user) me = await call('me');
     }
@@ -80,20 +111,20 @@ function gate() {
   if (!configured)
     return empty(
       '서비스 연결을 준비하고 있어요',
-      'Supabase 공개 키 설정과 DB 마이그레이션 적용 후 이용할 수 있어요.',
-      link('연결 안내', '#/guide', 'button primary'),
-    );
-  if (!state.user)
-    return empty(
-      '로그인하고 함께해요',
-      '게시글과 학교 정보는 로그인한 회원에게만 보여요.',
-      link('로그인', '#/login', 'button primary'),
+      '잠시 후 다시 접속해 주세요.',
+      link('홈으로', '#/', 'button primary'),
     );
   if (state.authError)
     return errorBox(state.authError, async () => {
       await refresh();
       await render();
     });
+  if (!state.user)
+    return empty(
+      '로그인하고 함께해요',
+      '게시글과 학교 정보는 로그인한 회원에게만 보여요.',
+      link('로그인', '#/login', 'button primary'),
+    );
   if (!state.me?.profile)
     return empty(
       '마지막으로 닉네임을 정해주세요',
@@ -112,20 +143,7 @@ async function render() {
   const current = ++renderId;
   const [route = '/', search = ''] = (location.hash.slice(1) || '/').split('?');
   const params = new URLSearchParams(search);
-  const { root, main } = layout(
-    state,
-    () => {
-      state.dark = !state.dark;
-      applyTheme();
-      try {
-        localStorage.setItem('schoolpot-theme', state.dark ? 'dark' : 'light');
-      } catch {
-        /* theme remains in memory */
-      }
-      render();
-    },
-    logout,
-  );
+  const { root, main } = layout(state, toggleTheme, logout);
   document.querySelector('#app').replaceChildren(root);
   main.append(
     el(
@@ -138,7 +156,7 @@ async function render() {
   try {
     let page;
     const publicRoutes = ['/', '/login', '/signup', '/reset', '/guide', '/boards', '/privacy'];
-    if (route === '/') page = await homePage(state);
+    if (route === '/') page = await homePage(state, render);
     else if (['/login', '/signup', '/reset', '/password'].includes(route)) {
       if (route === '/password' && !state.user) page = gate();
       else page = await authPage(route.slice(1), refresh);
@@ -171,7 +189,7 @@ async function render() {
           el(
             'p',
             {},
-            '아이디·8자 이상 비밀번호·본인 학년과 반을 입력하고 가입할 수 있어요. 이메일 인증이나 재학생 인증 신청은 받지 않으며, 연령·소속은 본인 신고에 따릅니다.',
+            '아이디·8자 이상 비밀번호·본인 학년과 반을 입력하고 가입할 수 있어요. 이메일 인증이나 재학생 인증 신청은 받지 않으며, 소속은 본인 신고에 따릅니다.',
           ),
           el('h2', {}, '안전한 커뮤니티'),
           el(
@@ -200,7 +218,7 @@ async function render() {
         await render();
       });
     else if (route === '/profile' && state.user)
-      page = profilePage(
+      page = await profilePage(
         state,
         async () => {
           await refresh();
@@ -237,17 +255,33 @@ async function render() {
       void showSitePopups();
     }
   } catch (err) {
-    if (current === renderId)
+    if (current === renderId) {
+      const staleModule =
+        /dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(
+          err.message,
+        );
       main.replaceChildren(
-        errorBox(err.message, async () => {
-          await refresh();
-          await render();
-        }),
+        errorBox(
+          staleModule
+            ? '새 화면을 불러오지 못했어요. 연결을 확인하고 다시 시도하면 사이트를 새로 불러옵니다.'
+            : err.message,
+          async () => {
+            if (staleModule) {
+              location.reload();
+              return;
+            }
+            await refresh();
+            await render();
+          },
+        ),
       );
+    }
   }
 }
 window.addEventListener('hashchange', async () => {
+  const target = location.hash;
   await render();
+  if (location.hash !== target) return;
   document.querySelector('#main')?.focus({ preventScroll: true });
   window.scrollTo({ top: 0 });
 });
@@ -256,7 +290,9 @@ document.querySelector('.skip-link')?.addEventListener('click', (event) => {
   document.querySelector('#main')?.focus();
 });
 if (client)
-  client.auth.onAuthStateChange((event) => {
+  client.auth.onAuthStateChange((event, session) => {
+    if (event === 'TOKEN_REFRESHED') return;
+    if (event === 'SIGNED_IN' && state.user?.id === session?.user?.id && state.me) return;
     if (event === 'PASSWORD_RECOVERY') {
       recovery = true;
       setTimeout(async () => {
@@ -264,12 +300,23 @@ if (client)
         location.hash = '/password';
         render();
       }, 0);
-    } else if (['SIGNED_IN', 'SIGNED_OUT', 'TOKEN_REFRESHED'].includes(event)) {
+    } else if (['SIGNED_IN', 'SIGNED_OUT'].includes(event)) {
       setTimeout(async () => {
         await refresh();
         if (!recovery) render();
       }, 0);
     }
   });
+connectionStatus();
+const initial = layout(state, toggleTheme, logout);
+initial.main.append(
+  el(
+    'div',
+    { class: 'loading', role: 'status' },
+    el('span', { class: 'spinner' }),
+    '스쿨팟을 준비하고 있어요…',
+  ),
+);
+document.querySelector('#app').replaceChildren(initial.root);
 await refresh();
 await render();

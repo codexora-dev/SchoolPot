@@ -203,7 +203,7 @@ export async function adminPage(params, reload) {
     pageTitle(
       'ADMINISTRATION',
       '관리자 대시보드',
-      '권한이 필요한 모든 작업은 서버에서 다시 검증됩니다.',
+      '학교 공간을 관리하고 접수된 문의를 확인하세요.',
     ),
     el(
       'div',

@@ -40,8 +40,38 @@ export function el(tag, attrs = {}, ...children) {
   return node;
 }
 export const link = (text, href, cls = '') => el('a', { href, class: cls }, text);
-export const button = (text, action, cls = 'button secondary') =>
-  el('button', { type: 'button', class: cls, onClick: action }, text);
+export function button(text, action, cls = 'button secondary') {
+  let busy = false;
+  const control = el(
+    'button',
+    {
+      type: 'button',
+      class: cls,
+      onClick: async (event) => {
+        if (busy) return;
+        const disabled = control.disabled;
+        try {
+          const result = action(event);
+          if (!result || typeof result.then !== 'function') return;
+          busy = true;
+          control.disabled = true;
+          control.setAttribute('aria-busy', 'true');
+          await result;
+        } catch {
+          toast('처리하지 못했어요. 잠시 후 다시 시도해 주세요.');
+        } finally {
+          if (busy) {
+            busy = false;
+            control.disabled = disabled;
+            control.removeAttribute('aria-busy');
+          }
+        }
+      },
+    },
+    text,
+  );
+  return control;
+}
 let toastTimer;
 export function toast(message) {
   const node = document.querySelector('#toast');

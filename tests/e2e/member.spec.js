@@ -96,6 +96,115 @@ test('회원 게시글 상세에서 XSS 원문은 텍스트로 렌더링', async
   await expect(page.locator('.post-body img')).toHaveCount(0);
   expect(await page.evaluate(() => window.xss)).toBeUndefined();
 });
+
+test('테마 변경과 연결 복구가 작성 중인 입력을 지우지 않는다', async ({ page, context }) => {
+  await setup(page);
+  await page.goto('/#/write?board=free');
+  await page.getByLabel('제목', { exact: true }).fill('작성 중인 제목');
+  await page.getByLabel('내용', { exact: true }).fill('새로고침 없이 유지할 본문');
+  await page.getByRole('button', { name: '다크 모드로 전환', exact: true }).click();
+  await expect(page.getByLabel('제목', { exact: true })).toHaveValue('작성 중인 제목');
+  await context.setOffline(true);
+  await expect(page.locator('.connection-status')).toBeVisible();
+  await context.setOffline(false);
+  await expect(page.locator('.connection-status')).toBeHidden();
+  await expect(page.getByLabel('내용', { exact: true })).toHaveValue('새로고침 없이 유지할 본문');
+});
+
+test('토큰 갱신으로 글쓰기 입력과 포커스를 초기화하지 않는다', async ({ page }) => {
+  await setup(page);
+  await page.route('**/auth/v1/token?grant_type=refresh_token', (r) =>
+    r.fulfill({
+      json: {
+        access_token: 'refreshed-test-token',
+        refresh_token: 'refreshed-token',
+        expires_in: 3600,
+        token_type: 'bearer',
+        user: { id, app_metadata: {}, user_metadata: {} },
+      },
+    }),
+  );
+  await page.goto('/#/write?board=free');
+  const title = page.getByLabel('제목', { exact: true });
+  await title.fill('갱신 중에도 유지');
+  await page.evaluate(async () => {
+    const { client } = await import('/src/services/api.js');
+    const result = await client.auth.refreshSession();
+    if (result.error) throw result.error;
+  });
+  await expect(title).toHaveValue('갱신 중에도 유지');
+  await expect(title).toBeFocused();
+});
+
+test('오래 걸리는 조회는 안내 후 다시 시도할 수 있다', async ({ page }) => {
+  await setup(page);
+  await page.goto('/#/profile');
+  await expect(page.getByRole('heading', { name: '나의 스쿨팟', exact: true })).toBeVisible();
+  await page.clock.install();
+  let requested = false;
+  await page.route('**/rest/v1/rpc/community', (r) => {
+    if (r.request().postDataJSON().p_action !== 'list_posts') return r.fallback();
+    requested = true;
+    return new Promise(() => {});
+  });
+  await page.getByRole('link', { name: '자유게시판', exact: true }).first().click();
+  await expect.poll(() => requested).toBe(true);
+  await page.clock.fastForward(15001);
+  await expect(page.getByRole('alert')).toContainText('응답이 늦어지고 있어요');
+  await expect(page.getByRole('button', { name: '다시 시도', exact: true })).toBeVisible();
+});
+
+test('홈 공지 조회 실패 시 게시글은 유지하고 해당 영역에서 재시도한다', async ({ page }) => {
+  await setup(page);
+  let fail = true;
+  await page.route('**/rest/v1/rpc/community', (r) => {
+    if (r.request().postDataJSON().p_action !== 'notices') return r.fallback();
+    return fail
+      ? r.fulfill({ status: 400, json: { code: 'P0001', message: 'failed' } })
+      : r.fulfill({ json: [{ title: '다시 불러온 공지' }] });
+  });
+  await page.goto('/');
+  await expect(page.locator('.home-feed')).toContainText(post.title);
+  await expect(page.locator('.notice-panel').getByRole('alert')).toBeVisible();
+  fail = false;
+  await page
+    .locator('.notice-panel')
+    .getByRole('button', { name: '다시 시도', exact: true })
+    .click();
+  await expect(page.locator('.notice-panel')).toContainText('다시 불러온 공지');
+  await expect(page.locator('.home-feed')).toContainText(post.title);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await page.screenshot({ path: 'docs/screenshots/member-home-mobile.png', fullPage: true });
+});
+
+test('진행 중인 공감 버튼을 연속 실행해도 한 번만 요청한다', async ({ page }) => {
+  await setup(page);
+  let calls = 0,
+    release;
+  const pending = new Promise((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/rest/v1/rpc/community', async (r) => {
+    if (r.request().postDataJSON().p_action !== 'like') return r.fallback();
+    calls++;
+    await pending;
+    await r.fulfill({ json: { ok: true } });
+  });
+  await page.goto('/#/post/' + postId);
+  const like = page.getByRole('button', { name: '♡ 공감 0', exact: true });
+  await like.evaluate((node) => {
+    node.click();
+    node.click();
+  });
+  await expect(like).toBeDisabled();
+  await expect.poll(() => calls).toBe(1);
+  release();
+  await expect(page.getByRole('button', { name: '♡ 공감 0', exact: true })).toBeEnabled();
+  expect(calls).toBe(1);
+});
 test('글쓰기와 임시 저장 및 게시', async ({ page }) => {
   await setup(page);
   await page.goto('/#/write?board=free');

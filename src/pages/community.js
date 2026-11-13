@@ -3,60 +3,20 @@ import { boards } from '../config/site.js';
 import { pageTitle } from '../components/layout.js';
 import { call } from '../services/community.js';
 import { required } from '../lib/validation.js';
-import { icon } from '../components/icons.js';
-export function postCard(p) {
-  const b = boards.find((b) => b.id === p.board_id);
-  return el(
-    'article',
-    { class: 'post-card' },
-    el(
-      'div',
-      { class: 'post-card-top' },
-      link(b?.name || '게시판', `#/board/${p.board_id}`, 'board-chip'),
-      el('span', { class: 'meta' }, date(p.created_at)),
-    ),
-    link(p.title, `#/post/${p.id}`, 'post-title'),
-    el('p', { class: 'post-excerpt' }, p.body.slice(0, 130)),
-    el(
-      'div',
-      { class: 'post-meta' },
-      el(
-        'span',
-        { class: 'post-author' },
-        el(
-          'span',
-          { class: 'mini-avatar', 'aria-hidden': 'true' },
-          p.anonymous ? '익' : p.author.slice(0, 1),
-        ),
-        p.author,
-      ),
-      el(
-        'span',
-        { class: 'post-metrics' },
-        ...[
-          ['heart', '공감', p.likes],
-          ['chat', '댓글', p.comments],
-          ['eye', '조회', p.views],
-        ].map(([name, label, value]) =>
-          el(
-            'span',
-            { class: 'metric' },
-            icon(name, 14),
-            el('span', { class: 'sr-only' }, label + ' '),
-            value,
-          ),
-        ),
-      ),
-    ),
-  );
-}
+import { postCard } from '../components/post-card.js';
 export async function boardPage(route, params, state = {}) {
   const board = route.startsWith('/board/') ? route.split('/')[2] : '';
   const popular = route === '/popular';
   const query = params.get('q') || '';
-  const sort = params.get('sort') || (popular ? 'popular' : 'latest');
-  const period = params.get('period') || '';
-  const offset = Number(params.get('offset')) || 0;
+  const requestedSort = params.get('sort');
+  const sort = ['latest', 'popular'].includes(requestedSort)
+    ? requestedSort
+    : popular
+      ? 'popular'
+      : 'latest';
+  const requestedPeriod = params.get('period');
+  const period = ['day', 'week'].includes(requestedPeriod) ? requestedPeriod : '';
+  const offset = Math.min(10000, Math.max(0, Number.parseInt(params.get('offset'), 10) || 0));
   const b = boards.find((b) => b.id === board);
   const writable = !b || b.can_post || state.me?.is_admin;
   if (board && !b) throw new Error('존재하지 않는 게시판이에요.');
@@ -120,17 +80,24 @@ export async function boardPage(route, params, state = {}) {
       posts.length
         ? posts.map(postCard)
         : empty(
-            '아직 이야기가 없어요',
-            '첫 번째 이야기를 남겨보세요.',
-            writable
-              ? link('글 쓰러 가기', `#/write?board=${board || ''}`, 'button primary')
-              : null,
+            query ? '검색 결과가 없어요' : '아직 이야기가 없어요',
+            query
+              ? '다른 검색어를 입력하거나 필터를 초기화해 보세요.'
+              : '첫 번째 이야기를 남겨보세요.',
+            query
+              ? link('검색 초기화', `#${route}`, 'button secondary')
+              : writable
+                ? link('글 쓰러 가기', `#/write?board=${board || ''}`, 'button primary')
+                : null,
           ),
     ),
     el(
-      'div',
-      { class: 'pagination' },
+      'nav',
+      { class: 'pagination', 'aria-label': '게시글 페이지' },
       offset ? link('← 이전', `#${route}?${prev}`, 'button secondary') : null,
+      offset || posts.length === 20
+        ? el('span', { class: 'page-indicator' }, `${Math.floor(offset / 20) + 1} 페이지`)
+        : null,
       posts.length === 20 ? link('다음 →', `#${route}?${next}`, 'button secondary') : null,
     ),
   );

@@ -32,10 +32,39 @@ export const client = configured
       },
     })
   : null;
+const readActions = new Set([
+  'me',
+  'list_posts',
+  'get_post',
+  'notices',
+  'notifications',
+  'assessments',
+  'admin_stats',
+  'admin_members',
+  'admin_reports',
+  'admin_logs',
+  'admin_settings',
+]);
+
 export async function rpc(name, payload = {}) {
   if (!client)
     throw new Error('Supabase 연결 설정이 필요해요. README의 연결 방법을 확인해 주세요.');
-  const { data, error } = await client.rpc(name, payload);
+  if (!navigator.onLine) throw new Error('인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
+  const request = client.rpc(name, payload);
+  const readOnly =
+    ['school_setup', 'board_catalog', 'site_popups'].includes(name) ||
+    readActions.has(payload.p_action);
+  const deadline = readOnly ? new window.AbortController() : null;
+  const timer = deadline ? setTimeout(() => deadline.abort(), 15000) : null;
+  let response;
+  try {
+    response = await (deadline ? request.abortSignal(deadline.signal) : request);
+  } finally {
+    clearTimeout(timer);
+  }
+  const { data, error } = response;
+  if (deadline?.signal.aborted)
+    throw new Error('응답이 늦어지고 있어요. 잠시 후 다시 시도해 주세요.');
   if (error) {
     console.warn('API request failed', error.code);
     throw new Error(friendlyError(error));

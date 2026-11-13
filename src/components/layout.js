@@ -221,7 +221,7 @@ export function layout(state, onTheme, onLogout) {
     if (account.tagName === 'DETAILS' && !account.contains(e.target)) account.open = false;
   });
   root.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && account.tagName === 'DETAILS') {
+    if (e.key === 'Escape' && account.tagName === 'DETAILS' && account.open) {
       account.open = false;
       account.querySelector('summary').focus();
     }
