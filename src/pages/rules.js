@@ -45,7 +45,7 @@ export async function rulesPage(params) {
       { class: 'tabs', 'aria-label': '운영 규정 보기' },
       ...[
         ['summary', '요약본'],
-        ['full', '전체 글'],
+        ['full', '전문'],
       ].map(([key, title]) =>
         el(
           'a',
