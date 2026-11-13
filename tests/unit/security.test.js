@@ -6,7 +6,7 @@ async function sources(dir) {
   const out = [];
   for (const file of await readdir(dir, { withFileTypes: true })) {
     const path = join(dir, file.name);
-    if (file.isDirectory()) out.push(...(await sources(path)));
+    if (file.isDirectory()) out.push(await sources(path));
     else if (path.endsWith('.js')) out.push(await readFile(path, 'utf8'));
   }
   return out.join('\n');

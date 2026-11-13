@@ -296,7 +296,12 @@ export async function classTests({ db, as, call, ok, denied, users }) {
       false,
     );
     await denied(
-      () => call('admin_delete', { id: bAssessment.id, kind: 'assessment' }),
+      () =>
+        call('admin_delete', {
+          id: bAssessment.id,
+          kind: 'assessment',
+          reason: '다른 반 접근 차단 검사',
+        }),
       /NOT_FOUND/,
     );
   });

@@ -33,11 +33,22 @@ export async function notificationsPage(reload) {
               el(
                 'div',
                 {},
-                n.feedback_id
-                  ? link(n.message, '#/feedback')
-                  : n.post_id
-                    ? link(n.message, `#/post/${n.post_id}`)
-                    : link(n.message, '#/notices'),
+                n.governance_kind
+                  ? link(
+                      n.message,
+                      {
+                        request: '#/admin?tab=requests',
+                        role: '#/profile',
+                        rights: '#/admin?tab=feedback',
+                        appeal: '#/account-status',
+                        sanction: '#/account-status',
+                      }[n.governance_kind] || '#/account-status',
+                    )
+                  : n.feedback_id
+                    ? link(n.message, '#/feedback')
+                    : n.post_id
+                      ? link(n.message, `#/post/${n.post_id}`)
+                      : link(n.message, '#/notices'),
                 el('small', { class: 'meta' }, date(n.created_at)),
               ),
               !n.read_at

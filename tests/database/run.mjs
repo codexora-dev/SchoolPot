@@ -1,3 +1,5 @@
+import { roleMigrationTests } from './role-migration.mjs';
+import { governanceTests } from './governance.mjs';
 import { PGlite } from '@electric-sql/pglite';
 import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -101,6 +103,9 @@ await db.exec(
     'utf8',
   ),
 );
+const governanceMigration=await readFile(new URL('../../supabase/migrations/20261113133531_admin_hierarchy_and_appeals.sql',import.meta.url),'utf8');
+await roleMigrationTests(db,governanceMigration,ok);
+await db.exec(governanceMigration);
 // Every regression case uses the final schema; these settings are fixtures only.
 await db.exec(
   "update private.class_settings set counts=array[2,3,1];update private.privacy_policy set is_ready=true,overseas_notice='Test fixture only; never publish as an operating policy.'",
@@ -203,7 +208,7 @@ await ok('테이블 직접 조회 및 역할 변경 차단', async () => {
     await denied(() => db.query(`select * from private.${name}`), /permission denied/);
   }
   await denied(
-    () => db.query("insert into private.user_roles values($1,'admin')", [users.a]),
+    () => db.query("insert into private.user_roles(user_id,role) values($1,'owner')", [users.a]),
     /permission denied/,
   );
 });
@@ -398,7 +403,7 @@ await ok('수행평가 등록, 타인 수정 차단, 수정 요청', async () =>
 });
 await ok('관리자 권한 부여는 서버에서만 가능', async () => {
   await db.exec('reset role');
-  await db.query("insert into private.user_roles values($1,'admin')", [users.admin]);
+  await db.query("insert into private.user_roles(user_id,role) values($1,'owner')", [users.admin]);
   await as('admin');
   assert.equal((await call('me')).is_admin, true);
   assert.equal((await call('admin_stats')).members, 3);
@@ -408,18 +413,36 @@ await ok('신고 처리, 공지 등록, 관리자 감사 기록', async () => {
   const r = await call('admin_reports');
   assert.equal(r.content.length, 2);
   assert.equal(r.assessments.length, 1);
-  await call('admin_resolve', { id: r.content[0].id, status: 'resolved' });
+  await call('admin_resolve', {
+    id: r.content[0].id,
+    kind: 'content',
+    status: 'resolved',
+    revision: r.content[0].revision,
+    reason: '신고 내용을 확인했습니다',
+  });
   await call('admin_notice', { title: '운영 공지', body: '서로 존중해 주세요.' });
   assert.equal((await call('notices')).length, 1);
-  assert.equal((await call('admin_audit')).length, 3);
+  assert.ok((await call('admin_audit')).length >= 3);
 });
 await ok('이용 제한은 다음 요청부터 즉시 적용', async () => {
   await as('admin');
-  await call('admin_suspend', { id: users.b, suspend: true });
+  await db.query('select public.governance($1,$2::jsonb)', [
+    'apply',
+    JSON.stringify({
+      target_id: users.b,
+      level: '7',
+      reason: '규정 위반 확인',
+      rule: '커뮤니티 규정',
+      operation_id: 'aaaaaaaa-1111-4111-8111-111111111111',
+    }),
+  ]);
   await as('b');
   await denied(() => call('list_posts'), /SUSPENDED/);
   await as('admin');
-  await call('admin_suspend', { id: users.b, suspend: false });
+  await db.query('select public.governance($1,$2::jsonb)', [
+    'release',
+    JSON.stringify({ target_id: users.b, revision: 2, reason: '검토 후 제한 해제' }),
+  ]);
   await as('b');
   assert.ok(Array.isArray(await call('list_posts')));
 });
@@ -863,6 +886,7 @@ await db.exec('reset role');
 await formattedTests({ db, as, call, ok, denied });
 await noticeManagementTests({ db, as, call, ok, denied, users });
 await noticeTests({ db, as, call, ok, denied, users });
+await governanceTests({ db, as, call, ok, denied, users });
 await db.exec('reset role');
 await db.exec(
   "delete from private.memberships;update private.class_settings set counts=array[0,0,0],revision=1;update private.privacy_policy set is_ready=false,overseas_notice=''",

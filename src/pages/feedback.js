@@ -72,6 +72,12 @@ export async function feedbackPage(params, reload) {
     },
     el('h2', {}, '관리자에게 보내기'),
     select('문의 유형', 'kind', kinds, 'suggestion'),
+    el(
+      'label',
+      { class: 'checkbox-field' },
+      el('input', { type: 'checkbox', name: 'sensitive', value: 'true' }),
+      '개인정보·보안·계정·관리자 관련 문의 (최고 관리자만 열람)',
+    ),
     field('제목', 'title', 'text', { required: true, minlength: 2, maxlength: 120 }),
     field('내용', 'body', 'textarea', {
       required: true,
@@ -189,6 +195,17 @@ export async function feedbackManager(params, reload) {
         ? items.map((item) => {
             const card = ticket(item);
             card.append(button('확인·답변', () => review(item), 'button secondary'));
+            if (!item.sensitive)
+              card.append(
+                button('최고 관리자에게 이관', async () => {
+                  try {
+                    await feedback('admin_escalate', { id: item.id, revision: item.revision });
+                    await reload();
+                  } catch (e) {
+                    toast(e.message);
+                  }
+                }),
+              );
             return card;
           })
         : empty('접수된 문의가 없어요', '선택한 조건에 해당하는 문의를 표시합니다.'),

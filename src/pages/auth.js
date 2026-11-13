@@ -1,3 +1,4 @@
+import { link as accountLink } from '../lib/dom.js';
 import { el, field, button, link, toast } from '../lib/dom.js';
 import { deleteAccountDialog } from '../components/delete-account.js';
 import { call } from '../services/community.js';
@@ -86,6 +87,7 @@ export function profilePage(state, refresh, params = new URLSearchParams()) {
         { class: 'muted' },
         '회원탈퇴 시 계정·프로필·소속·동의·로그인 세션과 계정에 연결된 작성 내용을 삭제합니다. 본인 게시글에 달린 답글도 함께 삭제될 수 있으며 되돌릴 수 없어요.',
       ),
+      accountLink('계정 상태·이의 제기', '#/account-status', 'button secondary'),
       button('회원 탈퇴', () => deleteAccountDialog(state, refresh), 'button danger'),
     ),
   );

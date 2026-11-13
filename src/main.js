@@ -1,10 +1,11 @@
 import './styles/main.css';
+import { roleOf } from './services/governance.js';
 import { el, link, empty, errorBox, toast } from './lib/dom.js';
 import { client, configured, authStorage } from './services/api.js';
 import { call } from './services/community.js';
 import { layout, pageTitle } from './components/layout.js';
 import { loadBoards } from './services/management.js';
-import { setBoards } from './config/site.js';
+import { setServiceInformation, setBoards } from './config/site.js';
 import { homePage } from './pages/home.js';
 import { boardsPage } from './pages/boards.js';
 import { icon } from './components/icons.js';
@@ -78,7 +79,7 @@ async function refresh() {
   let catalog = [];
   let boardError = null;
   try {
-    if (client) catalog = await loadBoards(Boolean(me?.is_admin));
+    if (client) catalog = await loadBoards(roleOf(me) === 'owner' && !me?.restricted);
   } catch (err) {
     boardError = err.message;
   }
@@ -86,6 +87,15 @@ async function refresh() {
   setBoards(catalog);
   state.boardError = boardError;
   Object.assign(state, { user, me, authError });
+  if (me?.role && !me.restricted) {
+    const { rpc } = await import('./services/api.js');
+    try {
+      const info = await rpc('service_configuration', { p_action: 'public' });
+      if (version === sessionVersion) setServiceInformation(info);
+    } catch {
+      /* Existing school display remains available when metadata is temporarily unavailable. */
+    }
+  }
 }
 async function logout() {
   if (client) {
@@ -145,6 +155,35 @@ async function render() {
   const current = ++renderId;
   const [route = '/', search = ''] = (location.hash.slice(1) || '/').split('?');
   const params = new URLSearchParams(search);
+  if (state.me?.restricted) {
+    try {
+      const { accountStatus } = await import('./pages/account-status.js');
+      const blocked = await accountStatus(
+        state,
+        async () => {
+          await refresh();
+          await render();
+        },
+        logout,
+        true,
+      );
+      if (current === renderId) document.querySelector('#app').replaceChildren(blocked);
+    } catch (e) {
+      if (current === renderId)
+        document.querySelector('#app').replaceChildren(
+          el(
+            'main',
+            { id: 'main', class: 'panel' },
+            errorBox(e.message, async () => {
+              await refresh();
+              await render();
+            }),
+            el('button', { class: 'button secondary', onClick: logout }, '로그아웃'),
+          ),
+        );
+    }
+    return;
+  }
   const { root, main } = layout(state, toggleTheme, logout);
   document.querySelector('#app').replaceChildren(root);
   main.append(
@@ -178,10 +217,14 @@ async function render() {
         await render();
       });
     else if (route === '/admin' && state.me?.is_admin)
-      page = await adminPage(params, async () => {
-        await refresh();
-        await render();
-      });
+      page = await adminPage(
+        params,
+        async () => {
+          await refresh();
+          await render();
+        },
+        state,
+      );
     else if (route === '/feedback' && state.user && state.me?.profile)
       page = await feedbackPage(params, render);
     else if (route === '/rules') page = await rulesPage(params);
@@ -247,7 +290,17 @@ async function render() {
       page = await postPage(route.split('/')[2], state, render, params);
     else if (route === '/write') page = await writePage(params, state);
     else if (route === '/feedback') page = await feedbackPage(params, render);
-    else if (route === '/notifications') page = await notificationsPage(render);
+    else if (route === '/account-status') {
+      const { accountStatus } = await import('./pages/account-status.js');
+      page = await accountStatus(
+        state,
+        async () => {
+          await refresh();
+          await render();
+        },
+        logout,
+      );
+    } else if (route === '/notifications') page = await notificationsPage(render);
     else if (route === '/notices') page = await noticesPage(params);
     else if (route.startsWith('/notice/'))
       page = await noticePage(route.split('/')[2], params, state, render);
@@ -256,7 +309,7 @@ async function render() {
     else if (route === '/assessments') page = await assessmentsPage(params, state, render);
     else if (route === '/admin')
       page = state.me?.is_admin
-        ? await adminPage(params, render)
+        ? await adminPage(params, render, state)
         : empty('관리자 전용 화면이에요', '이 계정에는 관리자 권한이 없어요.');
     else
       page = empty(
@@ -335,3 +388,45 @@ initial.main.append(
 document.querySelector('#app').replaceChildren(initial.root);
 await refresh();
 await render();
+
+let checkingAccess = false;
+let accessCheckPending = false;
+async function checkAccess() {
+  if (!state.user || document.hidden) return;
+  if (checkingAccess) {
+    accessCheckPending = true;
+    return;
+  }
+  checkingAccess = true;
+  const before = JSON.stringify([roleOf(state.me), state.me?.restricted]);
+  const previousStatus = JSON.stringify(state.me?.account_status);
+  try {
+    const me = await call('me');
+    const after = JSON.stringify([roleOf(me), me.restricted]);
+    const statusChanged = previousStatus !== JSON.stringify(me.account_status);
+    if (before !== after || (me.restricted && statusChanged)) {
+      for (const dialog of document.querySelectorAll('body > dialog')) {
+        dialog.close();
+        dialog.remove();
+      }
+      state.me = me;
+      await refresh();
+      await render();
+    } else {
+      state.me = me;
+      if (statusChanged) toast('계정 운영 안내가 변경됐어요. 프로필의 계정 상태에서 확인하세요.');
+    }
+  } catch {
+    /* A protected request surfaces errors; never restore access on a failed check. */
+  } finally {
+    checkingAccess = false;
+    if (accessCheckPending) {
+      accessCheckPending = false;
+      window.setTimeout(checkAccess, 0);
+    }
+  }
+}
+window.setInterval(checkAccess, 30000);
+window.addEventListener('focus', checkAccess);
+document.addEventListener('visibilitychange', checkAccess);
+window.addEventListener('schoolpot-access-change', checkAccess);

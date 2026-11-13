@@ -1,3 +1,4 @@
+import { client } from '../services/api.js';
 import { el, link, button } from '../lib/dom.js';
 import { pageTitle } from '../components/layout.js';
 
@@ -11,7 +12,19 @@ export async function rulesPage(params) {
     documents[view](),
     import('../lib/rich-text.js'),
   ]);
-  const body = richText(source, 'markdown');
+  let published = null;
+  if (client) {
+    try {
+      const { data, error } = await client.rpc('service_configuration', { p_action: 'rules' });
+      if (!error && data?.version) published = data;
+    } catch {
+      /* Bundled original rules remain readable offline. */
+    }
+  }
+  const body = richText(
+    published ? (view === 'full' ? published.full_text : published.summary) : source,
+    'markdown',
+  );
   const toc = [];
   for (const [index, heading] of [...body.querySelectorAll('h1,h2,h3,h4,h5,h6')].entries()) {
     const level = Number(heading.tagName.slice(1));
@@ -45,7 +58,7 @@ export async function rulesPage(params) {
       { class: 'tabs', 'aria-label': '운영 규정 보기' },
       ...[
         ['summary', '요약본'],
-        ['full', '전문'],
+        ['full', '전체 글'],
       ].map(([key, title]) =>
         el(
           'a',
@@ -61,7 +74,11 @@ export async function rulesPage(params) {
     el(
       'div',
       { class: 'rules-toolbar' },
-      el('span', { class: 'meta' }, '시행일 2026.11.13 · 운영자 제공 문서'),
+      el(
+        'span',
+        { class: 'meta' },
+        published ? `운영 규정 버전 ${published.version}` : '시행일 2026.11.13 · 운영자 제공 원문',
+      ),
       link('학년·반 관리', '#/enrollment', 'button secondary small'),
     ),
     el(

@@ -1,3 +1,4 @@
+import { roleOf } from '../services/governance.js';
 import { el, link, button, date, empty, errorBox } from '../lib/dom.js';
 import { pageTitle } from '../components/layout.js';
 import { call } from '../services/community.js';
@@ -130,20 +131,24 @@ export async function noticePage(id, params, state, reload) {
         ? el(
             'div',
             { class: 'actions' },
-            button('공지 수정', async () => {
-              const { editNotice } = await import('./admin-notices.js');
-              await editNotice(notice.id, reload);
-            }),
-            button(
-              '공지 삭제',
-              async () => {
-                const { deleteNotice } = await import('./admin-notices.js');
-                deleteNotice(notice, () => {
-                  location.hash = back.slice(1);
-                });
-              },
-              'button danger',
-            ),
+            notice.can_edit !== false
+              ? button('공지 수정', async () => {
+                  const { editNotice } = await import('./admin-notices.js');
+                  await editNotice(notice.id, reload, roleOf(state.me) === 'owner');
+                })
+              : null,
+            notice.can_delete !== false
+              ? button(
+                  '공지 삭제',
+                  async () => {
+                    const { deleteNotice } = await import('./admin-notices.js');
+                    deleteNotice(notice, () => {
+                      location.hash = back.slice(1);
+                    });
+                  },
+                  'button danger',
+                )
+              : null,
           )
         : null,
     ),

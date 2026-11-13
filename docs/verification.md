@@ -154,3 +154,24 @@ PGlite는 전체 마이그레이션을 새 PostgreSQL DB에 적용하고 권한�
 Lint·build를 통과했고 npm audit에서 알려진 취약점 0건을 확인했습니다. popup_preferences의 오늘 날짜는 Asia/Seoul 기준이며 브라우저 저장 차단 시 이번 방문에만 닫았다고 안내합니다.
 
 최신 Security Advisor: RLS 기본 거부의 no policy INFO 24건, Auth 유출 비밀번호 보호 비활성 WARN 1건. [유출 비밀번호 보호 설정](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) 비활성 WARN 1건도 확인했습니다. 팝업과 별개인 Auth 설정이며, 공식 문서상 Pro 이상 기능이므로 임의의 유료 플랜 변경은 하지 않았습니다.
+
+## 2026-11-13 관리자 계층·제재·이의 제기 (운영 미적용)
+
+| 검증                                   | 결과                           |
+| -------------------------------------- | ------------------------------ |
+| ESLint                                 | 통과                           |
+| Vitest                                 | 25 통과                        |
+| PGlite PostgreSQL, 전체 최종 migration | 101 통과                       |
+| Playwright fixture E2E                 | 69 통과, 실제 계정 2 기본 제외 |
+| Deno HTTP·가입·탈퇴 테스트             | 15 통과                        |
+| delete-account Deno check              | 통과                           |
+| Vite build                             | 통과                           |
+| 마지막 관리자 메뉴 보완 후 관련 E2E    | 9 통과                         |
+
+DB에는 역할 위조·일반 회원 관리자 RPC 차단·부관리자의 직접 제재/해제/역할/환경설정 차단, 현재 세션 해임, 마지막 owner 보호, 중요 공지 및 민감 문의 격리, 실제 작성자 증거 확인, 요청 보완/충돌/중복 승인, 제한 중 이의 제기/문의/탈퇴 예외, 다른 회원의 제재 접근 차단, 영구 제한 확인, 장기 제한 보존, 기간 만료, 규정/설정 버전 비교를 포함했다. 실제 운영과 같은 두 아이디의 이관 fixture를 롤백 트랜잭션에서 검사했다.
+
+브라우저에서는 부관리자 메뉴/직접 URL 차단/요청만 전송, 최고 관리자 제재 입력·사유·operation UUID, 닫기/Escape/라우트 이동으로 제한 팝업 우회 불가, 이의 제기 접수, 로그인 도중 해임·제한 화면 교체, 경고 확인 중 글 입력 보존, PC/390px 관리자 화면과 설정 저장을 검사했다. Edge 탈퇴 테스트는 최고 관리자 거절이 재인증/전역 로그아웃/삭제 전에 발생하고 일반 계정은 비밀번호 확인 후 삭제하는 순서를 검사했다.
+
+`docs/screenshots/admin-governance-desktop.png`, `admin-governance-mobile.png`, `account-restriction-mobile.png`를 직접 열어 확인했다. 기존 관련 화면 캡처의 자동 덮어쓰기는 정리했다.
+
+이번 migration·Edge·Pages는 아직 운영에 적용하지 않았다. 운영 Auth/PostgREST/Edge를 통한 실제 역할/제재/이의 제기 흐름, 여러 실제 DB 연결의 동시 승인, 공개 배포 빌드 검증은 승인 후 진행할 항목이다. 기존 데이터 보존과 권한 이관 계획은 `admin-governance.md`를 따른다.

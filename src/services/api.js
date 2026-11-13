@@ -56,7 +56,21 @@ export async function rpc(name, payload = {}) {
   const readOnly =
     ['school_setup', 'board_catalog', 'site_popups'].includes(name) ||
     readActions.has(payload.p_action) ||
-    (name === 'manage_notices' && ['list', 'get'].includes(payload.p_action));
+    (name === 'manage_notices' && ['list', 'get'].includes(payload.p_action)) ||
+    (name === 'governance' &&
+      [
+        'mine',
+        'rights_mine',
+        'targets',
+        'members',
+        'requests',
+        'appeals',
+        'roles',
+        'role_history',
+        'sanctions',
+        'security',
+      ].includes(payload.p_action)) ||
+    (name === 'service_configuration' && ['public', 'rules', 'history'].includes(payload.p_action));
   const deadline = readOnly ? new window.AbortController() : null;
   const timer = deadline ? setTimeout(() => deadline.abort(), 15000) : null;
   let response;
@@ -70,6 +84,8 @@ export async function rpc(name, payload = {}) {
     throw new Error('응답이 늦어지고 있어요. 잠시 후 다시 시도해 주세요.');
   if (error) {
     console.warn('API request failed', error.code);
+    if (payload.p_action !== 'me' && /SUSPENDED|FORBIDDEN|AUTH_REQUIRED/.test(error.message || ''))
+      window.dispatchEvent(new window.Event('schoolpot-access-change'));
     throw new Error(friendlyError(error));
   }
   return data;
@@ -77,6 +93,11 @@ export async function rpc(name, payload = {}) {
 export function friendlyError(error) {
   const messages = {
     ...schoolErrors,
+    STALE_CHANGE: '다른 변경사항이 있어요. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+    INVALID_EVIDENCE: '연결한 글·댓글·신고가 대상 회원의 자료인지 확인해 주세요.',
+    CONFIRM_REQUIRED: '영구 제한 확인 문구를 정확히 입력해 주세요.',
+    OWNER_TRANSFER_REQUIRED: '최고 관리자 계정 변경·탈퇴는 별도의 권한 이관 확인이 필요합니다.',
+    LAST_OWNER: '마지막 최고 관리자는 해임하거나 삭제할 수 없어요.',
     AUTH_REQUIRED: '로그인이 필요해요.',
     ACCOUNT_REQUIRED: '아이디 계정으로 다시 로그인해 주세요.',
     FORBIDDEN: '이 작업을 할 권한이 없어요.',
@@ -126,6 +147,7 @@ export async function edge(name, payload) {
       CONFIG: '계정 서버 설정을 확인해야 해요. 잠시 후 다시 시도해 주세요.',
       REAUTHENTICATION_FAILED: '현재 비밀번호가 올바르지 않아요. 다시 확인해 주세요.',
       FORBIDDEN_OR_RATE_LIMIT: '다시 로그인하거나 잠시 후 탈퇴를 다시 시도해 주세요.',
+      OWNER_TRANSFER_REQUIRED: '최고 관리자 계정은 별도의 권한 이관 후 탈퇴할 수 있어요.',
       DELETE_FAILED: '탈퇴 요청을 완료하지 못했어요. 연결을 확인한 뒤 다시 시도해 주세요.',
     };
     throw new Error(

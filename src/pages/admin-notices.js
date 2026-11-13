@@ -11,7 +11,7 @@ function openDialog(title, ...children) {
   dialog.showModal();
   return dialog;
 }
-export async function editNotice(id, onSaved) {
+export async function editNotice(id, onSaved, owner = true) {
   const main = document.querySelector('#main');
   let item;
   try {
@@ -38,6 +38,7 @@ export async function editNotice(id, onSaved) {
             title: required(data.title, 2, 120),
             body: required(data.body, 1, 20000),
             content_format: data.content_format,
+            owner_only: owner ? data.owner_only === 'on' : undefined,
           });
           dialog.close();
           toast(editing ? '공지를 수정했어요.' : '공지를 등록했어요.');
@@ -61,6 +62,14 @@ export async function editNotice(id, onSaved) {
       maxlength: 120,
       value: item.title || '',
     }),
+    owner
+      ? el(
+          'label',
+          { class: 'checkbox-field' },
+          el('input', { type: 'checkbox', name: 'owner_only', checked: item.owner_only }),
+          '최고 관리자 전용 중요 공지',
+        )
+      : null,
     contentEditor({ body: item.body || '', format: item.content_format || 'text' }),
     status,
     el(
@@ -121,7 +130,7 @@ async function previewNotice(id) {
     toast(e.message);
   }
 }
-export async function noticeManager(params, reload) {
+export async function noticeManager(params, reload, owner = true) {
   const query = (params.get('q') || '').trim().slice(0, 120),
     offset = Math.min(10000, Math.max(0, Number.parseInt(params.get('offset'), 10) || 0));
   const url = (q, skip) => {
@@ -147,7 +156,7 @@ export async function noticeManager(params, reload) {
         'div',
         { class: 'actions' },
         button('새로고침', reload),
-        button('＋ 공지 등록', () => editNotice(null, reload), 'button primary'),
+        button('＋ 공지 등록', () => editNotice(null, reload, owner), 'button primary'),
       ),
     ),
     el(
@@ -196,8 +205,12 @@ export async function noticeManager(params, reload) {
                 'div',
                 { class: 'actions' },
                 button('미리보기', () => previewNotice(item.id)),
-                button('수정', () => editNotice(item.id, reload)),
-                button('삭제', () => deleteNotice(item, reload), 'button danger'),
+                item.can_edit !== false
+                  ? button('수정', () => editNotice(item.id, reload, owner))
+                  : null,
+                item.can_delete !== false
+                  ? button('삭제', () => deleteNotice(item, reload), 'button danger')
+                  : null,
                 link('상세 보기', `#/notice/${item.id}`, 'button secondary'),
               ),
             ),
