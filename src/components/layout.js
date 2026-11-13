@@ -56,10 +56,13 @@ export function layout(state, onTheme, onLogout) {
       ...boards
         .filter((b) => b.is_active !== false)
         .map((b) => nav(b.name, '/board/' + b.id, boardIcons[b.id])),
+
       el('p', { class: 'nav-label' }, '학교생활'),
       nav('급식', '/meals', 'meal'),
       nav('학사일정', '/schedule', 'calendar'),
       nav('수행평가', '/assessments', 'check'),
+
+      el('p', { class: 'nav-label' }, '서비스 안내'),
       nav('공지사항', '/notices', 'bell'),
       nav('건의·오류 제보', '/feedback', 'chat'),
       state.me?.is_admin ? nav('관리자', '/admin', 'shield') : null,
