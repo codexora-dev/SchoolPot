@@ -93,6 +93,15 @@ export async function governanceTests({ db, as, call, ok, denied, users }) {
     ])
       await denied(() => gov(action, base), /FORBIDDEN/);
     assert.ok('members' in (await call('admin_stats')));
+    const matches = await gov('targets', { query: users.a });
+    assert.equal(matches.length, 1);
+    assert.equal(matches[0].role, 'member');
+    assert.equal(matches[0].id, users.a);
+    await as('admin');
+    const members = await gov('members', { query: users.a });
+    assert.equal(members.length, 1);
+    assert.equal(members[0].role, 'member');
+    await as('b');
   });
   await ok('일반 공지 위임·중요 공지 보호·타인 공지 삭제와 구 API 우회 차단', async () => {
     await as('admin');

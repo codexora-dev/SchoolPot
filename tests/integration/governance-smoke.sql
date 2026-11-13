@@ -9,6 +9,7 @@ select set_config('request.jwt.claims',current_setting('schoolpot.qa.owner'),tru
 do $$begin
  if public.community('me')->>'role' is distinct from 'owner' then raise exception 'QA_OWNER_ROLE';end if;
  if public.community('admin_stats')->>'members' is null then raise exception 'QA_OWNER_STATS';end if;
+ if jsonb_array_length(public.governance('members',jsonb_build_object('query',auth.uid()::text)))<>1 then raise exception 'QA_OWNER_LOOKUP';end if;
  if jsonb_array_length(public.governance('roles'))<>2 then raise exception 'QA_OWNER_ROLES';end if;
  begin perform public.community('delete_account_access');raise exception 'QA_OWNER_DELETE_ALLOWED';exception when others then if sqlerrm not like '%OWNER_TRANSFER_REQUIRED%' then raise;end if;end;
 end $$;
@@ -16,6 +17,7 @@ select set_config('request.jwt.claims',current_setting('schoolpot.qa.moderator')
 do $$begin
  if public.community('me')->>'role' is distinct from 'moderator' then raise exception 'QA_MODERATOR_ROLE';end if;
  if public.community('admin_stats')->>'members' is null then raise exception 'QA_MODERATOR_STATS';end if;
+ if jsonb_array_length(public.governance('targets',jsonb_build_object('query',auth.uid()::text)))<>1 then raise exception 'QA_MODERATOR_LOOKUP';end if;
  perform public.governance('requests');perform public.governance('appeals');perform public.manage_notices('list');
  begin perform public.governance('roles');raise exception 'QA_MODERATOR_ROLE_EDIT_ALLOWED';exception when others then if sqlerrm not like '%FORBIDDEN%' then raise;end if;end;
  begin perform public.governance('apply','{}');raise exception 'QA_MODERATOR_SANCTION_ALLOWED';exception when others then if sqlerrm not like '%FORBIDDEN%' then raise;end if;end;

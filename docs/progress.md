@@ -183,7 +183,6 @@ Security Advisor는 의도적인 기본 거부 no policy INFO 25건과 기존 Au
 
 운영 적용 전 남은 작업은 사용자의 최종 승인이다. 이후 운영 역할·migration 상태 재확인, migration/탈퇴 Edge 적용, Git main 반영·Pages 배포, 실제 Auth/PostgREST/Edge 및 배포 자산 검증을 진행해야 한다. 로컬 PGlite/fixture E2E/모의 Edge 검사를 실제 Supabase 운영 검증이나 다중 연결 동시성 검증을 대신했다고 표시하지 않는다. 권한 매트릭스·관리자 사용법·제한 의미·적용 순서는 `docs/admin-governance.md`에 기록했다.
 
-
 ## 2026-11-13 운영 반영 승인 및 배포 진행
 
 사용자가 “전에 한 내용들을 모두 반영해서 github pages에 배포”를 요청해 역할 이관·운영 DB·Edge·Pages 반영을 승인했다. 원격 재조사에서 두 관리자 모두 기존 admin이며 지정한 아이디와 일치함을 확인했다. 변경 전 private 함수 6개, 역할·공지 revision·현재 제한 설정과 기존 탈퇴 Edge 소스를 저장소 밖 `.codex/tmp`에 보관했다. 전체 DB 백업이나 복구 훈련을 수행했다고 표시하지 않는다.
@@ -193,3 +192,11 @@ Security Advisor는 의도적인 기본 거부 no policy INFO 25건과 기존 Au
 운영 PostgreSQL에서 기존 Auth session 행 및 authenticated 역할로 owner/moderator/member 디스패처 스모크 검사를 실행했다. 역할·관리 통계·최고 관리자 탈퇴 보호, 부관리자의 요청/이의 조회 허용 및 제재/해제/역할/게시판/전체 감사 차단, 일반 회원의 관리자 접근 차단을 확인했으며 감사·요청 제한 변경은 모두 롤백했다. 이것은 실제 외부 JWT 요청 검증과 구분한다. SQL은 `tests/integration/governance-smoke.sql`에 보관했다.
 
 Security Advisor는 의도적인 private 기본 거부 RLS INFO 35와 기존 유출 비밀번호 보호 비활성 WARN 1이다. Performance Advisor는 기존 anonymous_labels FK 인덱스 INFO 1과 미사용 인덱스 INFO 18이며 이번에 추가한 FK 인덱스의 누락은 없다. 신규 경고를 없애려고 직접 접근 정책을 넓히거나 새 인덱스를 삭제하지 않았다. 프론트엔드 main 반영·Pages 및 실제 HTTP/브라우저 검증을 이어간다.
+
+초기 기능 코드 0f70a65의 CI(43442793641)와 Pages(43442793553)가 성공했고 공개 빌드 식별자 및 JS/CSS 12개 자산 200/MIME을 확인했다. 실제 Auth 회원 계정으로 역할 위조 및 관리자 API 차단을 확인하고, 임시 계정의 제한 팝업·Escape/URL 우회 차단·이의 제기·권리 문의 저장을 검증했다.
+
+실제 관리자 흐름을 더 검사하면서 `governance`의 회원 검색 LIMIT에서 actor 변수 role과 응답 별칭 role이 충돌함을 발견했다. 기존 PGlite 검사에는 정상 검색 호출이 빠져 있었다. 적용한 migration은 수정하지 않고 `20261113143539_governance_actor_role_lookup.sql`을 새로 생성해 actor 변수를 v_role로 분리하고 정상 owner/member 검색 및 moderator 대상 검색 회귀 검사를 추가했다. DB 101개를 통과한 뒤 후속 migration을 운영에 적용했다. 관리자에게 전달하는 새 이의 제기 알림은 개인 계정 화면이 아닌 관리자 이의 제기 목록으로 연결하도록 appeal_admin 종류를 분리했다.
+
+live E2E 첫 시도는 문의 제출 뒤 details가 다시 닫혀 응답이 가려지는 상태를 테스트가 기다리지 못해 실패했다. 실제 문의 저장은 확인됐으며 재렌더 후 문의를 다시 펼치도록 검사를 수정했다. 두 번째는 운영 DB의 검색 충돌을 발견해 관리자 검증 단계가 완료되지 않아 중단했다. 두 임시 계정은 finally 정리로 삭제됐다. 세 번째는 최종 운영 DB에서 두 관리자의 실제 접수 이의 열람, 부관리자 답변/민감 문의 격리/해제 거절, 최고 관리자 해제와 정상 회원 검색을 롤백 트랜잭션으로 통과했다. 공개 사이트의 실제 제한 UI, 이의 제기, 문의, 제한 중 비밀번호 재확인 탈퇴와 탈퇴 후 기존 JWT 접근 거절까지 live E2E 1개를 통과했다.
+
+테스트에 사용한 세 계정 및 연결 작성 데이터의 잔여 0건, 회원 수 13 복원을 확인했다. QA에서 생성한 관리자 알림만 식별해 정리했다. 브라우저 검사는 실제 Supabase Auth/PostgREST/Edge를 사용했고, 관리자 자체의 외부 JWT 로그인은 비밀번호를 수집하지 않아 실행하지 않았다. 관리자 권한 검증은 운영 PostgreSQL의 기존 세션/실제 authenticated 역할 및 롤백으로 구분한다. 실제 여러 DB 연결의 동시 승인 부하 검증은 수행하지 않았다.

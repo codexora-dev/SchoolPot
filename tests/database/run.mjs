@@ -103,9 +103,24 @@ await db.exec(
     'utf8',
   ),
 );
-const governanceMigration=await readFile(new URL('../../supabase/migrations/20261113133531_admin_hierarchy_and_appeals.sql',import.meta.url),'utf8');
-await roleMigrationTests(db,governanceMigration,ok);
+const governanceMigration = await readFile(
+  new URL(
+    '../../supabase/migrations/20261113133531_admin_hierarchy_and_appeals.sql',
+    import.meta.url,
+  ),
+  'utf8',
+);
+await roleMigrationTests(db, governanceMigration, ok);
 await db.exec(governanceMigration);
+await db.exec(
+  await readFile(
+    new URL(
+      '../../supabase/migrations/20261113143539_governance_actor_role_lookup.sql',
+      import.meta.url,
+    ),
+    'utf8',
+  ),
+);
 // Every regression case uses the final schema; these settings are fixtures only.
 await db.exec(
   "update private.class_settings set counts=array[2,3,1];update private.privacy_policy set is_ready=true,overseas_notice='Test fixture only; never publish as an operating policy.'",

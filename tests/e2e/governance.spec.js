@@ -246,3 +246,26 @@ test('최고 관리자 서비스 설정을 확인하고 사유와 버전을 함�
     true,
   );
 });
+
+test('관리자 이의 제기 알림은 관리자 이의 제기 목록으로 연결한다', async ({ page }) => {
+  await setup(page, 'moderator');
+  await page.route('**/rest/v1/rpc/community', (r) =>
+    r.request().postDataJSON().p_action === 'notifications'
+      ? r.fulfill({
+          json: [
+            {
+              id: sid,
+              message: '새 제재 이의 제기가 접수됐어요.',
+              governance_kind: 'appeal_admin',
+              created_at: new Date().toISOString(),
+            },
+          ],
+        })
+      : r.fallback(),
+  );
+  await page.goto('/#/notifications');
+  await expect(page.getByRole('link', { name: '새 제재 이의 제기가 접수됐어요.' })).toHaveAttribute(
+    'href',
+    '#/admin?tab=appeals',
+  );
+});

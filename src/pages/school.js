@@ -41,6 +41,7 @@ export async function notificationsPage(reload) {
                         role: '#/profile',
                         rights: '#/admin?tab=feedback',
                         appeal: '#/account-status',
+                        appeal_admin: '#/admin?tab=appeals',
                         sanction: '#/account-status',
                       }[n.governance_kind] || '#/account-status',
                     )
