@@ -6,6 +6,8 @@ lint/build, Vitest 25, PGlite 87, Playwright 63(기본 live 2 제외), npm audit
 
 운영 PostgreSQL에서 notice-management-rollback.sql의 public RPC 등록/목록 projection/본문/수정/revision 거부/삭제를 통과했다. 임시 JWT·세션 fixture를 사용했으며 모든 쓰기와 알림을 rollback했다. 실제 관리자 로그인/PostgREST 쓰기를 검증했다고 표시하지 않는다. 공개 사이트 검증은 배포 후 추가한다.
 
+[Pages 43402183641](https://github.com/codexora-dev/SchoolPot/actions/runs/43402183641) / [Checks 43402183647](https://github.com/codexora-dev/SchoolPot/actions/runs/43402183647)가 6e768cd1862dcc8c38e79d5ca9a54163a4852e7b에서 success. 공개 HTML 빌드 ID·JS/CSS 11개 HTTP/MIME 통과. 실제 일반 QA 계정 Auth/PostgREST로 manage_notices 권한 위조 list가 FORBIDDEN임을 확인했다. 이어서 같은 격리 테스트 브라우저의 관리자/읽기/쓰기 fixture로 배포 편집기·기존 형식 로딩·수정 payload/revision·목록 갱신·Markdown 미리보기·390px 폭·JS 오류 0개를 검사했다. 실제 서버에서 QA 계정의 관리자 역할을 바꾸거나 운영 공지/알림을 쓰지 않았다. QA 계정 삭제 후 잔여 0, 테스트 공지 잔여 0, 운영 공지 기존 1건, private RLS 누락 0개 확인.
+
 ## 2026-11-13 운영 규정·공지 목록과 상세
 
 사용자 첨부 요약본/전문과 repo 복사본의 SHA-256 일치를 확인했다. 공개 페이지에서 선택·목차·전문 끝부분·모바일 폭을 검증하고 규정 문구나 제재 로직을 임의 변경하지 않았다. 공지 metadata 목록 20개·검색·페이지·개별 ID·본문 서식·복귀 상태·새로고침·관리자 확인 삭제 및 일반 회원/비회원 제한을 검사했다.

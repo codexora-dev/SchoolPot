@@ -7,6 +7,7 @@
 - 새 공지 등록은 기존 알림 경로를 재사용한다. 수정은 제목/본문/형식/수정일/버전만 바꾸고 작성자/작성일을 보존하며 알림을 추가 생성하지 않는다. 기존 공지 내용은 마이그레이션으로 바꾸지 않았다.
 - lint·Vitest 25·PGlite 87·Playwright 63(기본 live 2 제외)·build·npm audit 0 통과. 관리자 목록 CRUD/미리보기/상세 수정·원래 Markdown 로딩→HTML 변경·동시 편집 충돌·삭제 확인·일반 사용자 역할 위조·세션/이용 제한·수정 후 알림 수 불변을 검사했다. 이전 인라인 공지 form을 제거하며 미사용 import도 정리했다.
 - 운영 스키마 조사 후 notice_management 적용. 실제 PostgreSQL public RPC 등록/본문/목록/수정/오래된 revision 거부/삭제를 임시 JWT·세션으로 실행해 전부 rollback했다. 실제 Auth/PostgREST 검증과 구분하며 운영 공지나 알림을 테스트 게시하지 않았다. 공개 배포 검증은 확인 후 추가한다.
+- 배포 완료: 6e768cd1862dcc8c38e79d5ca9a54163a4852e7b, Pages 43402183641 / Checks 43402183647 success. 공개 빌드 ID·JS/CSS 11개 HTTP/MIME 통과. notice-management-production.mjs에서 실제 일반 QA 계정 Auth/PostgREST의 권한 위조 관리 목록 요청을 거절하는지 확인했다. 배포 관리자 UI는 브라우저 로컬 관리자/읽기/쓰기 fixture로 편집·목록 반영·Markdown 미리보기·revision 전달·모바일 폭·JS 오류 0개를 확인했다. 실제 관리자 계정 권한을 새로 부여하거나 운영 공지에 쓰지 않았다. QA 잔여 0, 롤백 공지 0, 기존 운영 공지 1건, private RLS 누락 0개를 확인했다. 기존 Security Advisor INFO 29/WARN 1 유지.
 
 ## 2026-11-13 운영 규정 원문 게시와 공지 목록/상세
 
