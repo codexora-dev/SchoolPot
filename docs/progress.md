@@ -8,6 +8,8 @@
 - 원격 notices와 dispatcher 조사 후 notice_list_and_detail 적용. notice_list는 본문/작성자 없는 metadata만 반환하고 get_notice는 전체 본문을 ID로 조회하되 작성자 ID를 제외한다. 계정·현재 세션·유효 소속·이용 제한 검사는 기존 dispatcher에서 유지한다. 기존 notices API도 호환 유지했다.
 - 로컬 lint·Vitest 25·PGlite 83·Playwright 60(기본 live 2 제외)·build·npm audit 0 통과. 새 검색 테스트에서 두 검색 버튼을 구분하도록 범위를 수정했고 삭제 확인 helper의 누락 export를 수정해 관리자 삭제까지 재검증했다. 원격 formatted-rollback.sql에 새 목록/상세 검증을 추가해 실제 public RPC 결과를 확인하고 쓰기·알림을 전부 rollback했다. 이는 실제 Auth/PostgREST 인증 검증과 구분한다.
 - 공개 사이트의 원문 assets/직접 주소 및 실제 계정 읽기 권한과 공지 UI 검증은 배포 후 추가한다. 운영 규정 게시를 법적 적합성 검토 완료로 표시하지 않는다.
+- 배포 완료: 6b72742442839a345b9262e1a7974c63a8fe0c0d, Pages 43398397744 / Checks 43398397989 success. 공개 HTML 빌드 ID·JS/CSS 11개 HTTP/MIME 검증 통과. rules-notices-production.mjs에서 실제 공개 문서 전문 끝/요약 전환과 실제 임시 계정 Auth/PostgREST의 notice_list metadata·없는 상세 ID 차단을 확인했다. 공지 UI는 실제 로그인+브라우저 읽기 fixture로 목록→상세→새로고침→복귀·HTTPS 이미지·JS 오류 0개를 검증했다. 운영 팝업이 테스트 조작을 가린 첫 실행은 임시 테스트 브라우저의 관련 없는 팝업 조회만 fixture로 분리해 해결했다. QA 계정을 삭제하고 공지/알림은 게시하지 않았다.
+- 사용자 원문의 Markdown 강제 줄바꿈(끝의 두 공백)을 보존하도록 해당 파일의 Git whitespace 검사만 조정했다. 원문 복사 때 SHA 일치를 확인했으며 Git은 저장소 LF 정책에 따라 줄끝을 정규화한다. 원문의 문장·표·링크를 임의 변경하지 않았다. 기존 Security Advisor INFO 29/WARN 1은 유지한다.
 
 ## 2026-11-13 공지·팝업 Text/Markdown/HTML 및 이미지
 

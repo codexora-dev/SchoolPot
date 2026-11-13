@@ -27,6 +27,8 @@ try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
+  // Unrelated operator popups are isolated only in this temporary test browser.
+  await page.route('**/rest/v1/rpc/site_popups', (r) => r.fulfill({ json: [] }));
   await page.goto(
     base +
       (process.env.EXPECTED_BUILD ? '?build=' + process.env.EXPECTED_BUILD : '') +

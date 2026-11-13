@@ -8,6 +8,8 @@ lint/build, Vitest 25, PGlite 83, Playwright 60(기본 live 2 제외), npm audit
 
 원격 PostgreSQL public RPC의 metadata projection/개별 format 응답을 JWT·임시 세션 fixture로 롤백 검증했다. 실제 Auth/PostgREST 검증을 대신하지 않는다. 공개 규정은 별도 정적 문서이며 회원 공지의 공개 읽기 예외를 추가하지 않았다. 공개 배포/실제 계정 결과는 확인 후 추가한다.
 
+배포 6b72742442839a345b9262e1a7974c63a8fe0c0d의 [Pages 43398397744](https://github.com/codexora-dev/SchoolPot/actions/runs/43398397744) / [Checks 43398397989](https://github.com/codexora-dev/SchoolPot/actions/runs/43398397989) success, 공개 빌드 ID·JS/CSS 11개 HTTP/MIME 통과. 실제 배포 규정 assets로 전문 마지막 문장과 요약 전환·모바일 폭을 검사했다. 실제 QA 가입/Auth 로그인 후 hosted PostgREST에서 공지 목록 metadata에 본문/작성자가 없고 없는 ID는 NOT_FOUND임을 검증했다. 실제 로그인 브라우저의 공지 읽기 응답은 로컬 fixture로 대체하여 목록/상세/새로고침/복귀/HTTPS 이미지 naturalWidth와 JS 오류 0개를 확인했다. 관련 없는 운영 팝업도 테스트 브라우저에서만 분리했으며 운영 DB에 공지·알림을 생성하지 않았다. QA 계정 잔여 0, 롤백 공지 잔여 0, private RLS 누락 0개를 확인했다.
+
 ## 2026-11-13 공지·팝업 서식과 이미지
 
 lint/build, Vitest 25, PGlite 80, Playwright 54(기본 live 2 제외), npm audit 0 통과. UI에서 3형식 선택·본문/팝업 미리보기·저장·회원 화면·재편집을 검사했다. 실제 Chromium에 XSS HTML을 입력해 script/iframe/style/foreign namespace/이벤트/위험 URL을 제거하고 실행/외부 스타일 요청이 없음을 확인했다. HTTPS 이미지 응답 fixture의 naturalWidth=1과 모바일 폭, Markdown 제목·강조·목록·표·코드·외부 링크 보호를 확인했다. 기존 text의 HTML 원문은 그대로 표시한다.
