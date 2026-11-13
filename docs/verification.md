@@ -8,6 +8,8 @@ Vitest 23, PGlite 77, build 및 npm audit(0) 통과. 최신 프론트엔드는 �
 
 초기 HTML의 JS 참조 합계는 비교 당시 공개 버전 297,662 bytes, 신규 빌드 254,224 bytes로 14.6% 감소했다. lazy route 파일은 필요한 화면 진입 시 별도로 전송한다. 비압축 빌드 전송 대상 크기 비교이며 실사용 속도·부하 수치를 보장하지 않는다. PC/모바일/다크 화면 캡처를 검토했고 공개 배포·실제 계정 결과는 확인 후 추가한다.
 
+최종 lint 통과, 브라우저 전체 50개 통과(기본 실제 서비스 opt-in 2개 제외). [Pages 43387497983](https://github.com/codexora-dev/SchoolPot/actions/runs/43387497983)와 [Checks 43387498738](https://github.com/codexora-dev/SchoolPot/actions/runs/43387498738)가 프론트엔드 6152cf9b196a6ed20dbfc1b7b54c1053ccb09a86에서 모두 success다. 공개 HTML 빌드 ID와 JS/CSS 7개 HTTP/MIME 검사 통과. 공개 Chromium 1440/390px에서 홈/게시판/가입/로그인/처리방침의 동적 모듈, 체크박스 제거·학년별 실제 7반 선택, 테마 전환 시 입력 유지, 가로 넘침 없음, JS 오류/asset 오류 0개를 확인했다. 공개 URL account-live 1개도 실제 Auth/Edge와 함께 통과했고 QA를 삭제했다. 실제 커뮤니티 데이터 쓰기나 동시 이용 부하 검사를 수행한 것으로 표시하지 않는다.
+
 ## 2026-11-13 연락처·정책 섹션·가입 체크 제거
 
 이 섹션이 아래 과거 이메일/연령 체크 검증보다 우선한다. 현재 소스에서 운영자 개인 이메일을 삭제하고 현재 DB contact_email=null 및 보관 문서 contact_email 제거를 적용했다. Git 과거 커밋·캐시·외부 백업까지 삭제한 것은 아니다.
