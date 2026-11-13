@@ -68,6 +68,15 @@ await db.exec(
     'utf8',
   ),
 );
+await db.exec(
+  await readFile(
+    new URL(
+      '../../supabase/migrations/20261113072018_remove_public_contact_and_age_prompt.sql',
+      import.meta.url,
+    ),
+    'utf8',
+  ),
+);
 // Every regression case uses the final schema; these settings are fixtures only.
 await db.exec(
   "update private.class_settings set counts=array[2,3,1];update private.privacy_policy set is_ready=true,overseas_notice='Test fixture only; never publish as an operating policy.'",

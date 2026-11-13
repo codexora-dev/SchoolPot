@@ -6,7 +6,7 @@ alter table private.memberships alter column consented_at drop not null,alter co
  add column notice_recorded_at timestamptz,
  add column consented_policy_version integer;
 update private.memberships set consented_policy_version=policy_version where consented_at is not null;
-alter table private.privacy_policy add column contact_email text not null default 'kminjae803@naver.com'
+alter table private.privacy_policy add column contact_email text
  check(char_length(contact_email)<=254 and contact_email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+[.][A-Za-z]{2,63}$');
 update private.privacy_policy set version=version+1,updated_at=now(),sections=jsonb_build_array(
  jsonb_build_array('필수 서비스 정보 처리','아이디·비밀번호·닉네임과 학년도·학년·반은 계정 생성·인증·복구와 본인 반 일정 제공 등 회원 서비스의 체결·이행에 필요한 범위에서 처리합니다. 학년·반 선택에 개인정보 동의 체크를 요구하지 않으며 동의하지 않은 사항을 동의 기록으로 저장하지 않습니다.'),

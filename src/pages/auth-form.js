@@ -137,14 +137,6 @@ export async function authPage(mode, refresh) {
         )
       : null,
     signup ? enrollmentFields(setup) : null,
-    signup
-      ? el(
-          'label',
-          { class: 'checkbox age-check' },
-          el('input', { type: 'checkbox', name: 'age_14_confirmed', required: true }),
-          '만 14세 이상입니다.',
-        )
-      : null,
     !signup && !reset && !update
       ? el(
           'div',

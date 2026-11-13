@@ -54,7 +54,6 @@ test('실제 자동로그인 선택·해제 복원과 비밀번호 재확인 회
         grade,
         class_number: 1,
         policy_version: setup.policy.version,
-        age_14_confirmed: true,
       },
     });
     expect(registered.error).toBe(null);

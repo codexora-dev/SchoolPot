@@ -206,7 +206,6 @@ export async function privacyManager(reload) {
           await schoolMembership('admin_save_policy', {
             version: p.version,
             controller: data.get('controller'),
-            contact_email: data.get('contact_email'),
             contact_url: data.get('contact_url'),
             overseas_notice: data.get('overseas_notice'),
             is_ready: data.has('is_ready'),
@@ -237,11 +236,6 @@ export async function privacyManager(reload) {
       maxlength: 400,
       value: p.contact_url,
     }),
-    field('개인정보 문의 이메일', 'contact_email', 'email', {
-      required: true,
-      maxlength: 254,
-      value: p.contact_email || 'kminjae803@naver.com',
-    }),
     field('위탁·국외 처리·보안 기록 보유기간 안내', 'overseas_notice', 'textarea', {
       required: true,
       maxlength: 8000,
@@ -252,11 +246,7 @@ export async function privacyManager(reload) {
       { class: 'hint' },
       'Supabase 프로젝트 DB 리전은 한국 서울입니다. 이것만으로 인증·Edge·지원·하위 처리업체와 GitHub Pages의 모든 처리가 국내에만 있다고 볼 수는 없습니다. 실제 계약·하위 처리업체·국가·연락처·이전 항목/시점/방법·목적·보유기간·거부 방법과 영향을 확인해 명시하세요. 보안 해시 카운터의 보유기간과 외부 사업자 로그·백업의 삭제 절차도 고지해야 합니다.',
     ),
-    el(
-      'p',
-      { class: 'hint' },
-      '공개 이메일의 문의를 정기적으로 확인해 주세요. 문서 저장과 검토 표시만으로 법적 검토가 완료되는 것은 아닙니다.',
-    ),
+    el('p', { class: 'hint' }, '문서 저장과 검토 표시만으로 법적 검토가 완료되는 것은 아닙니다.'),
     el(
       'label',
       { class: 'checkbox' },

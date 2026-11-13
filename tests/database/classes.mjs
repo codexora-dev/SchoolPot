@@ -18,6 +18,7 @@ export async function classTests({ db, as, call, ok, denied, users }) {
       assert.deepEqual(config.counts, [0, 0, 0]);
       assert.equal(config.policy.is_ready, false);
       assert.deepEqual(config.policy.sections, privacySections);
+      assert.equal('contact_email' in config.policy, false);
       assert.equal(JSON.stringify(config).includes(users.a), false);
       await denied(() => api('admin_settings'), /permission denied/);
     },
@@ -118,7 +119,6 @@ export async function classTests({ db, as, call, ok, denied, users }) {
         grade: 1,
         class_number: 1,
         policy_version: config.policy.version,
-        age_14_confirmed: true,
       };
     },
   );
@@ -137,7 +137,7 @@ export async function classTests({ db, as, call, ok, denied, users }) {
     );
   });
   await ok(
-    '가입 서버는 연령 확인 후 동의 없이 소속을 기록하며 일반 회원은 실행할 수 없다',
+    '가입 서버는 연령·동의 확인 없이 소속을 기록하며 일반 회원은 실행할 수 없다',
     async () => {
       const gateway = async (action, payload) =>
         (
@@ -149,10 +149,7 @@ export async function classTests({ db, as, call, ok, denied, users }) {
       await as('a');
       await denied(() => gateway('validate_signup', consent), /permission denied/);
       await as('', 'service_role');
-      await denied(
-        () => gateway('validate_signup', { ...consent, age_14_confirmed: false }),
-        /AGE_REQUIRED/,
-      );
+      assert.equal((await gateway('validate_signup', consent)).grade, 1);
       const v = await gateway('validate_signup', consent);
       assert.equal(v.class_number, 1);
       const created = '99999999-4444-4444-8444-999999999999';
@@ -179,6 +176,17 @@ export async function classTests({ db, as, call, ok, denied, users }) {
         /duplicate key/,
       );
       await db.exec('reset role');
+      const stored = (
+        await db.query(
+          'select age_14_confirmed_at,consented_at,overseas_consented_at from private.memberships where user_id=$1',
+          [created],
+        )
+      ).rows[0];
+      assert.deepEqual(stored, {
+        age_14_confirmed_at: null,
+        consented_at: null,
+        overseas_consented_at: null,
+      });
       assert.equal(
         (await db.query('select class_number from private.memberships where user_id=$1', [created]))
           .rows[0].class_number,

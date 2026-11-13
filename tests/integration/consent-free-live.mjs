@@ -39,7 +39,6 @@ try {
         school_year: setup.school_year,
         grade,
         class_number: i,
-        age_14_confirmed: true,
       },
     });
     assert.equal(result.error, null);
@@ -85,10 +84,10 @@ try {
   }
   const publicSetup = await make().rpc('school_setup');
   assert.equal(publicSetup.error, null);
-  assert.equal(publicSetup.data.policy.contact_email, 'kminjae803@naver.com');
+  assert.equal('contact_email' in publicSetup.data.policy, false);
   for (const a of accounts) assert.equal(JSON.stringify(publicSetup.data).includes(a.id), false);
   console.log(
-    'PASS actual signup without consent/policy-version, Auth login, own class, class-switch denial, forged-admin denial, private table denial, public privacy email.',
+    'PASS actual signup without consent/age/policy-version, Auth login, own class, class-switch denial, forged-admin denial, private table denial, no public contact email.',
   );
 } finally {
   for (const a of accounts) {

@@ -41,10 +41,7 @@ async function session(page, admin = false, complete = true) {
   );
   return state;
 }
-async function consent(page) {
-  await page.locator('input[name=age_14_confirmed]').check();
-}
-test('동의 없이 가입 학년별 반 선택·14세 확인과 서버 전송', async ({ page }) => {
+test('동의·연령 체크 없이 가입 학년별 반 선택과 서버 전송', async ({ page }) => {
   let body;
   await page.route('**/functions/v1/accounts', (route) => {
     if (route.request().method() === 'OPTIONS')
@@ -61,7 +58,8 @@ test('동의 없이 가입 학년별 반 선택·14세 확인과 서버 전송',
   });
   await page.setViewportSize({ width: 320, height: 900 });
   await page.goto('/#/signup');
-  await expect(page.locator('input[name=age_14_confirmed]')).not.toBeChecked();
+  await expect(page.locator('input[name=age_14_confirmed]')).toHaveCount(0);
+  await expect(page.locator('main .processing-note')).toHaveCount(0);
   await expect(
     page.locator('input[name=privacy_consent], input[name=overseas_consent]'),
   ).toHaveCount(0);
@@ -73,18 +71,15 @@ test('동의 없이 가입 학년별 반 선택·14세 확인과 서버 전송',
   await page.getByLabel('아이디', { exact: true }).fill('classfriend');
   await page.getByLabel('비밀번호', { exact: true }).fill('testing888');
   await page.getByRole('button', { name: '회원가입', exact: true }).click();
-  expect(body).toBeUndefined();
-  await consent(page);
-  await page.getByRole('button', { name: '회원가입', exact: true }).click();
   await expect(page.getByRole('heading', { name: '가입이 완료되었어요' })).toBeVisible();
   expect(body).toMatchObject({
     grade: 2,
     class_number: 3,
     school_year: 2026,
     policy_version: 1,
-    age_14_confirmed: true,
   });
   for (const name of [
+    'age_14_confirmed',
     'email',
     'birth_date',
     'student_id',
@@ -173,7 +168,9 @@ test('관리자 학년별 반 수 저장·회원 소속 정정', async ({ page }
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: 'docs/screenshots/admin-class-settings.png', fullPage: true });
 });
-test('문서 검토 상태와 별개로 가입할 수 있고 공개 이메일 문의를 제공한다', async ({ page }) => {
+test('문서 검토 상태와 별개로 가입하고 삭제한 개인정보 섹션은 표시하지 않는다', async ({
+  page,
+}) => {
   await page.route('**/rest/v1/rpc/school_setup', (r) =>
     r.fulfill({
       json: {
@@ -181,7 +178,6 @@ test('문서 검토 상태와 별개로 가입할 수 있고 공개 이메일 �
         policy: {
           ...schoolSetup.policy,
           is_ready: false,
-          contact_email: 'kminjae803@naver.com',
           contact_url: 'https://codexora-dev.github.io/SPContact',
         },
       },
@@ -191,15 +187,13 @@ test('문서 검토 상태와 별개로 가입할 수 있고 공개 이메일 �
   await expect(page.getByRole('button', { name: '회원가입', exact: true })).toBeEnabled();
   await page.goto('/#/privacy');
   await expect(page.getByRole('heading', { name: '개인정보 처리방침', exact: true })).toBeVisible();
-  const contact = page.getByRole('link', {
-    name: '스쿨팟 개인정보 문의 (외부 사이트)',
-    exact: true,
-  });
-  await expect(contact).toHaveAttribute('href', 'https://codexora-dev.github.io/SPContact');
-  await expect(contact).toHaveAttribute('rel', 'noopener noreferrer');
+  await expect(page.locator('main a[href^="mailto:"]')).toHaveCount(0);
   await expect(
-    page.getByRole('link', { name: 'kminjae803@naver.com', exact: true }),
-  ).toHaveAttribute('href', 'mailto:kminjae803@naver.com');
+    page.getByRole('heading', { name: '위탁·국외 처리 및 보안 기록', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('heading', { name: '개인정보 문의와 권리행사', exact: true }),
+  ).toHaveCount(0);
 });
 test('소속이 유효하지 않게 되면 재시도 후 학년·반 선택으로 안내한다', async ({ page }) => {
   const state = await session(page, false, true);

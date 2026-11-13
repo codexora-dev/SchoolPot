@@ -15,7 +15,6 @@ const body = {
   grade: 1,
   class_number: 2,
   policy_version: 3,
-  age_14_confirmed: true,
 };
 async function run(errorAt?: string, errorCode = 'AGE_REQUIRED') {
   Deno.env.set('SUPABASE_URL', 'https://project.example');
@@ -93,10 +92,9 @@ Deno.test('회원가입은 동의 플래그 없이 Auth·복구 해시·소속 �
     actions.join('|') === 'limit|validate_signup|/auth/v1/admin/users|set_recovery|set_membership',
   );
   const payload = calls.find((c) => c.action === 'set_membership')!.payload!;
-  assert(
-    payload.user_id === user.id && payload.age_14_confirmed === true && payload.class_number === 2,
-  );
+  assert(payload.user_id === user.id && payload.class_number === 2);
   assert(!('password' in payload));
+  assert(!('age_14_confirmed' in payload));
   assert(!('recovery_code' in payload));
   assert(!('privacy_consent' in payload));
   assert(!('overseas_consent' in payload));
