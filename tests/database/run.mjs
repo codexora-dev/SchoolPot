@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { classTests } from './classes.mjs';
 import { formattedTests } from './formatted.mjs';
+import { noticeTests } from './notices.mjs';
 const db = new PGlite();
 let passed = 0;
 const users = {
@@ -84,6 +85,12 @@ await db.exec(
       '../../supabase/migrations/20261113080157_formatted_announcements.sql',
       import.meta.url,
     ),
+    'utf8',
+  ),
+);
+await db.exec(
+  await readFile(
+    new URL('../../supabase/migrations/20261113085033_notice_list_and_detail.sql', import.meta.url),
     'utf8',
   ),
 );
@@ -847,6 +854,7 @@ await ok('신규 관리 API도 이용 제한·현재 세션을 검증', async ()
 });
 await db.exec('reset role');
 await formattedTests({ db, as, call, ok, denied });
+await noticeTests({ db, as, call, ok, denied, users });
 await db.exec('reset role');
 await db.exec(
   "delete from private.memberships;update private.class_settings set counts=array[0,0,0],revision=1;update private.privacy_policy set is_ready=false,overseas_notice=''",

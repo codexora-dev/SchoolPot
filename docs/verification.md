@@ -1,5 +1,13 @@
 # 검증 결과 · 2026-11-12
 
+## 2026-11-13 운영 규정·공지 목록과 상세
+
+사용자 첨부 요약본/전문과 repo 복사본의 SHA-256 일치를 확인했다. 공개 페이지에서 선택·목차·전문 끝부분·모바일 폭을 검증하고 규정 문구나 제재 로직을 임의 변경하지 않았다. 공지 metadata 목록 20개·검색·페이지·개별 ID·본문 서식·복귀 상태·새로고침·관리자 확인 삭제 및 일반 회원/비회원 제한을 검사했다.
+
+lint/build, Vitest 25, PGlite 83, Playwright 60(기본 live 2 제외), npm audit 취약점 0 통과. notice_list는 본문/작성자 제외, get_notice는 상세 서식·본문 제공과 작성자 제외를 PGlite에서 실제 SQL 실행으로 확인했다. 첫 페이지 밖 ID, 중복 없는 페이지 분할, 없는 ID, 세션 없음·소속 없음·비회원 차단도 검사했다.
+
+원격 PostgreSQL public RPC의 metadata projection/개별 format 응답을 JWT·임시 세션 fixture로 롤백 검증했다. 실제 Auth/PostgREST 검증을 대신하지 않는다. 공개 규정은 별도 정적 문서이며 회원 공지의 공개 읽기 예외를 추가하지 않았다. 공개 배포/실제 계정 결과는 확인 후 추가한다.
+
 ## 2026-11-13 공지·팝업 서식과 이미지
 
 lint/build, Vitest 25, PGlite 80, Playwright 54(기본 live 2 제외), npm audit 0 통과. UI에서 3형식 선택·본문/팝업 미리보기·저장·회원 화면·재편집을 검사했다. 실제 Chromium에 XSS HTML을 입력해 script/iframe/style/foreign namespace/이벤트/위험 URL을 제거하고 실행/외부 스타일 요청이 없음을 확인했다. HTTPS 이미지 응답 fixture의 naturalWidth=1과 모바일 폭, Markdown 제목·강조·목록·표·코드·외부 링크 보호를 확인했다. 기존 text의 HTML 원문은 그대로 표시한다.

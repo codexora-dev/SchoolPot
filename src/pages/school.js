@@ -3,7 +3,6 @@ import { pageTitle } from '../components/layout.js';
 import { call } from '../services/community.js';
 import { edge } from '../services/api.js';
 import { reportDialog } from './community.js';
-import { contentBody } from '../components/content-body.js';
 export async function notificationsPage(reload) {
   const items = await call('notifications');
   return el(
@@ -59,44 +58,6 @@ export async function notificationsPage(reload) {
           )
         : empty('아직 도착한 알림이 없어요', '새 댓글과 학교 소식을 여기서 확인할 수 있어요.'),
     ),
-  );
-}
-export async function noticesPage(state, reload) {
-  const notices = await call('notices');
-  return el(
-    'section',
-    {},
-    pageTitle('SCHOOL NEWS', '공지사항', '학교와 스쿨팟의 새로운 소식을 확인하세요.'),
-    notices.length
-      ? notices.map((n) =>
-          el(
-            'article',
-            { class: 'panel notice' },
-            el('span', { class: 'board-chip' }, '공지'),
-            el('h2', {}, n.title),
-            el('small', { class: 'meta' }, date(n.created_at)),
-            contentBody(n.body, n.content_format),
-            state.me?.is_admin
-              ? button(
-                  '공지 삭제',
-                  async () => {
-                    try {
-                      await call('admin_delete', { kind: 'notice', id: n.id });
-                      await reload();
-                    } catch (err) {
-                      toast(err.message);
-                    }
-                  },
-                  'text-button',
-                )
-              : null,
-          ),
-        )
-      : el(
-          'div',
-          { class: 'panel' },
-          empty('등록된 공지가 없어요', '새로운 소식이 올라오면 알려드릴게요.'),
-        ),
   );
 }
 export async function neisPage(kind, params) {

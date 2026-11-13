@@ -2,3 +2,5 @@
 *.png binary
 *.jpg binary
 *.ico binary
+# User-supplied Markdown uses two trailing spaces for semantic line breaks.
+src/content/rules/*.md whitespace=-blank-at-eol

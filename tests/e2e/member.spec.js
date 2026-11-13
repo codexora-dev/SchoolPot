@@ -158,7 +158,7 @@ test('홈 공지 조회 실패 시 게시글은 유지하고 해당 영역에서
   await setup(page);
   let fail = true;
   await page.route('**/rest/v1/rpc/community', (r) => {
-    if (r.request().postDataJSON().p_action !== 'notices') return r.fallback();
+    if (r.request().postDataJSON().p_action !== 'notice_list') return r.fallback();
     return fail
       ? r.fulfill({ status: 400, json: { code: 'P0001', message: 'failed' } })
       : r.fulfill({ json: [{ title: '다시 불러온 공지' }] });

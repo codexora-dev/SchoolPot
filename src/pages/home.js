@@ -14,7 +14,7 @@ export async function homePage(state, reload) {
     const results = await Promise.allSettled([
       call('list_posts'),
       call('list_posts', { sort: 'popular', period: 'week' }),
-      call('notices'),
+      call('notice_list'),
     ]);
     failures = results.map((r) => (r.status === 'rejected' ? r.reason.message : null));
     [posts, popular, notices] = results.map((r) => (r.status === 'fulfilled' ? r.value : []));
@@ -208,7 +208,7 @@ export async function homePage(state, reload) {
                           'article',
                           { class: 'notice-preview' },
                           el('span', { class: 'board-chip' }, '공지'),
-                          link(n.title, '#/notices'),
+                          link(n.title, `#/notice/${n.id}`),
                         ),
                       )
                   : el('p', { class: 'small-empty' }, '등록된 공지가 없어요.'),
@@ -247,7 +247,12 @@ export async function homePage(state, reload) {
       'footer',
       { class: 'page-footer' },
       el('span', {}, '스쿨팟 · 우리의 하루, 우리의 이야기'),
-      link('이용 안내', '#/guide'),
+      el(
+        'div',
+        { class: 'footer-links' },
+        link('이용 안내', '#/guide'),
+        link('운영 규정', '#/rules'),
+      ),
     ),
   );
 }

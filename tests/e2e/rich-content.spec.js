@@ -124,7 +124,9 @@ test('관리자 공지 Markdown 미리보기·전송·회원 화면 표시', asy
       notices = [{ ...payload, id, created_at: new Date().toISOString() }];
       return { ok: true, id };
     }
-    if (p.p_action === 'notices') return notices;
+    if (p.p_action === 'notice_list')
+      return notices.map(({ id, title, created_at }) => ({ id, title, created_at }));
+    if (p.p_action === 'get_notice') return notices.find((n) => n.id === p.p_payload.id);
     return [];
   });
   await page.goto('/#/admin?tab=notice');
@@ -141,6 +143,7 @@ test('관리자 공지 Markdown 미리보기·전송·회원 화면 표시', asy
   await page.getByRole('button', { name: '등록하고 알림 보내기', exact: true }).click();
   await expect.poll(() => payload?.content_format).toBe('markdown');
   await page.goto('/#/notices');
+  await page.getByRole('link', { name: /새 공지 안내/ }).click();
   await expect(page.locator('.notice strong')).toHaveText('필독');
   await expect(page.locator('.notice img')).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });

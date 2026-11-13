@@ -145,7 +145,7 @@ export function reportDialog(kind, id) {
   dialog.addEventListener('close', () => dialog.remove());
   dialog.showModal();
 }
-function confirmDialog(title, action) {
+export function confirmDialog(title, action) {
   const dialog = el(
     'dialog',
     {},

@@ -24,7 +24,10 @@ begin
   n:=public.community('admin_notice',jsonb_build_object('title','서식 롤백 확인','body','**본문** <b>안내</b>','content_format',f));
   select item into row_data from jsonb_array_elements(public.community('notices','{}'))item where item->>'id'=n->>'id';
   if row_data->>'content_format' is distinct from f or row_data ? 'author_id' then raise exception 'Notice projection failed';end if;
+  row_data:=public.community('get_notice',jsonb_build_object('id',n->>'id'));
+  if row_data->>'content_format' is distinct from f or row_data ? 'author_id' then raise exception 'Notice detail failed';end if;
  end loop;
+ if not exists(select 1 from jsonb_array_elements(public.community('notice_list',jsonb_build_object('query','서식 롤백 확인')))item where item->>'id'=n->>'id' and not(item ? 'body') and not(item ? 'author_id')) then raise exception 'Notice list projection failed';end if;
  active:=jsonb_array_length(public.site_popups())<3;
  p:=public.manage_popups('save',jsonb_build_object('title','서식 롤백 확인','body','**안내**','content_format','markdown','close_options',jsonb_build_array('once'),'is_active',active));
  select item into row_data from jsonb_array_elements(public.manage_popups('list','{}'))item where item->>'id'=p->>'id';

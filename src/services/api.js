@@ -37,6 +37,8 @@ const readActions = new Set([
   'list_posts',
   'get_post',
   'notices',
+  'notice_list',
+  'get_notice',
   'notifications',
   'assessments',
   'admin_stats',

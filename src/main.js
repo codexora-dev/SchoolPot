@@ -19,7 +19,9 @@ const postPage = (...args) => import('./pages/community.js').then((m) => m.postP
 const writePage = (...args) => import('./pages/community.js').then((m) => m.writePage(...args));
 const notificationsPage = (...args) =>
   import('./pages/school.js').then((m) => m.notificationsPage(...args));
-const noticesPage = (...args) => import('./pages/school.js').then((m) => m.noticesPage(...args));
+const noticesPage = (...args) => import('./pages/notices.js').then((m) => m.noticesPage(...args));
+const noticePage = (...args) => import('./pages/notices.js').then((m) => m.noticePage(...args));
+const rulesPage = (...args) => import('./pages/rules.js').then((m) => m.rulesPage(...args));
 const neisPage = (...args) => import('./pages/school.js').then((m) => m.neisPage(...args));
 const assessmentsPage = (...args) =>
   import('./pages/school.js').then((m) => m.assessmentsPage(...args));
@@ -155,7 +157,16 @@ async function render() {
   );
   try {
     let page;
-    const publicRoutes = ['/', '/login', '/signup', '/reset', '/guide', '/boards', '/privacy'];
+    const publicRoutes = [
+      '/',
+      '/login',
+      '/signup',
+      '/reset',
+      '/guide',
+      '/rules',
+      '/boards',
+      '/privacy',
+    ];
     if (route === '/') page = await homePage(state, render);
     else if (['/login', '/signup', '/reset', '/password'].includes(route)) {
       if (route === '/password' && !state.user) page = gate();
@@ -173,6 +184,7 @@ async function render() {
       });
     else if (route === '/feedback' && state.user && state.me?.profile)
       page = await feedbackPage(params, render);
+    else if (route === '/rules') page = await rulesPage(params);
     else if (route === '/guide')
       page = el(
         'section',
@@ -185,6 +197,7 @@ async function render() {
         el(
           'article',
           { class: 'panel prose' },
+          link('요약본·전체 운영 규정 읽기', '#/rules', 'button primary'),
           el('h2', {}, '회원가입과 이용'),
           el(
             'p',
@@ -235,7 +248,9 @@ async function render() {
     else if (route === '/write') page = await writePage(params, state);
     else if (route === '/feedback') page = await feedbackPage(params, render);
     else if (route === '/notifications') page = await notificationsPage(render);
-    else if (route === '/notices') page = await noticesPage(state, render);
+    else if (route === '/notices') page = await noticesPage(params);
+    else if (route.startsWith('/notice/'))
+      page = await noticePage(route.split('/')[2], params, state, render);
     else if (route === '/meals' || route === '/schedule')
       page = await neisPage(route.slice(1), params);
     else if (route === '/assessments') page = await assessmentsPage(params, state, render);

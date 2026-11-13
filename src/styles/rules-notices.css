@@ -1,0 +1,137 @@
+.rules-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-block: 18px;
+}
+.rules-toc {
+  margin-bottom: 24px;
+}
+.rules-toc summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding-block: 4px;
+}
+.rules-toc nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 20px;
+  margin-top: 16px;
+}
+.rules-toc-link {
+  background: none;
+  border: 0;
+  color: var(--green);
+  text-align: left;
+  padding: 10px 8px;
+  border-radius: 8px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+.rules-toc-link:hover {
+  background: var(--surface-soft);
+}
+.rules-document {
+  padding: clamp(22px, 4vw, 44px);
+}
+.rules-document h2,
+.rules-document h3,
+.rules-document h4 {
+  scroll-margin-top: calc(var(--header) + 24px);
+}
+.rules-document h2 {
+  margin-top: 2em;
+}
+.rules-document h3 {
+  margin-top: 1.8em;
+}
+.rules-document li {
+  margin-block: 7px;
+}
+.rules-document table {
+  margin-block: 20px;
+}
+.rules-bottom {
+  margin-block: 24px;
+}
+.footer-links {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.notice-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.notice-filters input {
+  flex: 1;
+  min-width: 150px;
+}
+.notice-list {
+  display: grid;
+  gap: 12px;
+}
+.notice-list-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 0;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.notice-list-item:hover {
+  border-color: var(--focus);
+  background: var(--surface-soft);
+}
+.notice-list-item h2 {
+  font-size: 19px;
+  line-height: 1.5;
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+.notice-row-arrow {
+  color: var(--green);
+}
+.notice-detail h1 {
+  font-size: clamp(25px, 3vw, 36px);
+  line-height: 1.45;
+  margin-block: 16px;
+  overflow-wrap: anywhere;
+}
+.notice-detail .content-body {
+  padding-block: 28px;
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+}
+@media (max-width: 760px) {
+  .rules-document h2,
+  .rules-document h3,
+  .rules-document h4 {
+    scroll-margin-top: calc(var(--header) + 96px);
+  }
+  .rules-toc nav {
+    grid-template-columns: 1fr;
+  }
+  .notice-list-item {
+    gap: 12px;
+    padding: 20px 16px;
+  }
+  .notice-list-item h2 {
+    font-size: 17px;
+  }
+  .notice-filters input {
+    flex-basis: 100%;
+  }
+  .rules-page .tabs {
+    position: sticky;
+    top: calc(var(--header) + 8px);
+    z-index: 5;
+    box-shadow: var(--shadow);
+  }
+}
