@@ -5,6 +5,7 @@ import { boardManager } from './admin-boards.js';
 import { feedbackManager } from './feedback.js';
 import { popupManager } from './admin-popups.js';
 import { classManager, privacyManager } from './admin-classes.js';
+import { contentEditor } from '../components/content-editor.js';
 export async function adminPage(params, reload) {
   const tab = params.get('tab') || 'overview';
   const main = el('div');
@@ -169,7 +170,7 @@ export async function adminPage(params, reload) {
         },
         el('h2', {}, '공지사항 등록'),
         field('제목', 'title', 'text', { required: true, minlength: 2, maxlength: 120 }),
-        field('내용', 'body', 'textarea', { required: true, maxlength: 20000, rows: 10 }),
+        contentEditor(),
         el('button', { class: 'button primary', type: 'submit' }, '등록하고 알림 보내기'),
       ),
     );

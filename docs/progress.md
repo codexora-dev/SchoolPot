@@ -1,5 +1,14 @@
 # 개발 및 검증 기록
 
+## 2026-11-13 공지·팝업 Text/Markdown/HTML 및 이미지
+
+- 관리자 작성 형식 선택, 본문 미리보기와 팝업 전체 미리보기를 연결했다. Text는 줄바꿈과 원문을 그대로, Markdown/HTML은 제목·강조·목록·표·코드·링크·HTTPS 이미지를 표시한다. 기존 데이터는 text 기본값으로 유지한다.
+- markdown-it 15.0.3과 parse5 8.1.1을 고정 설치했다. HTML은 JS AST로 파싱한 뒤 허용 태그·속성을 새 DOM으로 만들며 innerHTML 등 브라우저 주입 API를 사용하지 않는다. script/style/iframe/form/SVG/MathML·이벤트/임의 스타일·위험 URL·data/blob 이미지를 제외한다. 이미지/링크 referrer를 차단하고 외부 링크 opener를 차단한다. 이미지 실패 시 대체 안내를 표시한다.
+- 서식 파서 묶음은 서식 콘텐츠를 볼 때만 지연 로딩한다. CSP의 이미지 원본만 HTTPS로 확장했고 script/style/connect 제한은 유지한다. 렌더링은 20,000자·5,000노드·깊이 40으로 제한한다. 업로드 기능을 추가한 것은 아니며 관리자가 직접 이미지 HTTPS URL을 작성한다.
+- 원격 notices/site_popups 스키마 조사 후 formatted_announcements 마이그레이션 적용. content_format enum 제약(text/markdown/html), 공개 팝업 응답의 형식, 관리자 저장/검증, 형식 변경 시 revision 증가를 추가했다. 현재 계정·세션·역할·이용 제한·감사·동시 게시 3개 제한·기본 닫기는 유지한다.
+- 로컬 Vitest 25, PGlite 80, Playwright 54(기본 live 2 제외), build 및 lint 통과, npm audit 취약점 0. HTML 실행/스타일 요청 차단과 이미지 naturalWidth, Markdown 표·코드·링크, 작성→미리보기→전송→표시/재편집을 확인했다. DB fixture의 역할 초기화 누락과 테스트의 정적 닫기 아이콘까지 검사한 범위를 수정했고 lint의 Buffer/control regex 지적을 해결했다.
+- 실제 PostgreSQL에서 tests/integration/formatted-rollback.sql을 실행했다. 기존 관리자 역할/임시 JWT·세션 fixture로 public RPC의 공지 3형식·팝업 형식/버전/공개 응답·잘못된 형식 거부를 검증했고 알림 포함 모든 쓰기를 rollback했다. 실제 Auth/PostgREST 인증 테스트와 구분하며 운영 공지/팝업을 테스트 게시하지 않았다. 공개 배포/CSP 검증은 확인 후 추가한다.
+
 ## 2026-11-13 배포 전 안정성·사용성·초기 전송량 개선
 
 - 테마 전환과 토큰 갱신/동일 계정 재로그인 이벤트가 폼을 재생성하던 경로를 제거했다. 입력·포커스가 유지되며 인증 상태 변경(로그아웃 등)은 계속 반영한다. 초기 인증 확인 중에도 셸과 진행 상태가 보이고, 빠른 경로 이동의 이전 응답은 화면·스크롤을 덮어쓰지 않는다.

@@ -3,6 +3,7 @@ import { icon } from './icons.js';
 import { configured } from '../services/api.js';
 import { getSitePopups } from '../services/popups.js';
 import { isPopupDismissed, dismissPopup } from '../lib/popup-preferences.js';
+import { contentBody } from './content-body.js';
 
 const labels = { once: '닫기', today: '오늘 하루 보지 않기', forever: '다시 보지 않기' };
 export function popupDialog(popup, { preview = false, onDismiss = () => {} } = {}) {
@@ -30,7 +31,7 @@ export function popupDialog(popup, { preview = false, onDismiss = () => {} } = {
       ),
     ),
     el('h2', { id: titleId }, popup.title),
-    el('div', { class: 'site-popup-body preserve' }, popup.body),
+    contentBody(popup.body, popup.content_format, 'site-popup-body'),
     el(
       'div',
       { class: 'site-popup-footer' },

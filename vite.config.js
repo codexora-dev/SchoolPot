@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
               attrs: {
                 'http-equiv': 'Content-Security-Policy',
                 content:
-                  "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://hlglstdtgcodblynicmh.supabase.co wss://hlglstdtgcodblynicmh.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'",
+                  "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: https:; connect-src 'self' https://hlglstdtgcodblynicmh.supabase.co wss://hlglstdtgcodblynicmh.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'",
               },
               injectTo: 'head-prepend',
             },

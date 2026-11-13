@@ -2,6 +2,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { classTests } from './classes.mjs';
+import { formattedTests } from './formatted.mjs';
 const db = new PGlite();
 let passed = 0;
 const users = {
@@ -72,6 +73,15 @@ await db.exec(
   await readFile(
     new URL(
       '../../supabase/migrations/20261113072018_remove_public_contact_and_age_prompt.sql',
+      import.meta.url,
+    ),
+    'utf8',
+  ),
+);
+await db.exec(
+  await readFile(
+    new URL(
+      '../../supabase/migrations/20261113080157_formatted_announcements.sql',
       import.meta.url,
     ),
     'utf8',
@@ -835,6 +845,8 @@ await ok('신규 관리 API도 이용 제한·현재 세션을 검증', async ()
   await db.exec('reset role');
   await db.query('insert into auth.sessions values($1,$1)', [users.b]);
 });
+await db.exec('reset role');
+await formattedTests({ db, as, call, ok, denied });
 await db.exec('reset role');
 await db.exec(
   "delete from private.memberships;update private.class_settings set counts=array[0,0,0],revision=1;update private.privacy_policy set is_ready=false,overseas_notice=''",

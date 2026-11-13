@@ -1,0 +1,107 @@
+.content-body {
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.content-plain {
+  white-space: pre-wrap;
+}
+.content-body > div > :first-child {
+  margin-top: 0;
+}
+.content-body > div > :last-child {
+  margin-bottom: 0;
+}
+.content-body h1,
+.content-body h2,
+.content-body h3,
+.content-body h4 {
+  margin: 1.3em 0 0.5em;
+  line-height: 1.4;
+}
+.content-body h1 {
+  font-size: 1.8em;
+}
+.content-body h2 {
+  font-size: 1.5em;
+}
+.content-body h3 {
+  font-size: 1.25em;
+}
+.content-body p {
+  margin: 0.7em 0;
+}
+.content-body ul,
+.content-body ol {
+  padding-left: 1.6em;
+}
+.content-body blockquote {
+  margin: 1em 0;
+  padding: 12px 18px;
+  border-left: 3px solid var(--green);
+  background: var(--surface-soft);
+}
+.content-body a {
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.content-body img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  max-height: 700px;
+  object-fit: contain;
+  margin: 14px auto;
+  border-radius: 12px;
+}
+.content-body pre {
+  overflow: auto;
+  padding: 16px;
+  background: var(--surface-soft);
+  border-radius: 12px;
+  white-space: pre;
+}
+.content-body code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.9em;
+}
+.content-body table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+.content-body th,
+.content-body td {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+}
+.content-body th {
+  background: var(--surface-soft);
+}
+.content-body hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 20px 0;
+}
+.image-fallback {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 12px;
+}
+.content-editor {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.content-editor > .button {
+  justify-self: start;
+}
+.content-preview {
+  width: min(700px, calc(100vw - 32px));
+}
+.content-preview > .button {
+  margin-top: 24px;
+}

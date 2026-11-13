@@ -3,6 +3,7 @@ import { pageTitle } from '../components/layout.js';
 import { call } from '../services/community.js';
 import { edge } from '../services/api.js';
 import { reportDialog } from './community.js';
+import { contentBody } from '../components/content-body.js';
 export async function notificationsPage(reload) {
   const items = await call('notifications');
   return el(
@@ -74,7 +75,7 @@ export async function noticesPage(state, reload) {
             el('span', { class: 'board-chip' }, '공지'),
             el('h2', {}, n.title),
             el('small', { class: 'meta' }, date(n.created_at)),
-            el('p', { class: 'preserve' }, n.body),
+            contentBody(n.body, n.content_format),
             state.me?.is_admin
               ? button(
                   '공지 삭제',

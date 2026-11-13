@@ -2,6 +2,7 @@ import { el, field, button, empty, toast, date } from '../lib/dom.js';
 import { required } from '../lib/validation.js';
 import { managePopups } from '../services/popups.js';
 import { popupDialog, invalidateSitePopups } from '../components/site-popups.js';
+import { contentEditor } from '../components/content-editor.js';
 
 const optionLabels = {
   once: '기본 닫기 (항상 제공)',
@@ -24,6 +25,7 @@ export async function popupManager(reload) {
         revision: item.revision || null,
         title: required(data.title, 2, 120),
         body: required(data.body, 1, 8000),
+        content_format: data.content_format,
         is_active: Boolean(data.is_active),
         close_options: [
           'once',
@@ -63,11 +65,12 @@ export async function popupManager(reload) {
         maxlength: 120,
         value: item.title || '',
       }),
-      field('팝업 본문', 'body', 'textarea', {
-        required: true,
-        maxlength: 8000,
+      contentEditor({
+        label: '팝업 본문',
+        body: item.body || '',
+        format: item.content_format || 'text',
+        maxLength: 8000,
         rows: 8,
-        placeholder: '방문자에게 안내할 내용을 입력해 주세요.',
       }),
       el(
         'fieldset',

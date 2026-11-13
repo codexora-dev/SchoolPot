@@ -1,5 +1,13 @@
 # 검증 결과 · 2026-11-12
 
+## 2026-11-13 공지·팝업 서식과 이미지
+
+lint/build, Vitest 25, PGlite 80, Playwright 54(기본 live 2 제외), npm audit 0 통과. UI에서 3형식 선택·본문/팝업 미리보기·저장·회원 화면·재편집을 검사했다. 실제 Chromium에 XSS HTML을 입력해 script/iframe/style/foreign namespace/이벤트/위험 URL을 제거하고 실행/외부 스타일 요청이 없음을 확인했다. HTTPS 이미지 응답 fixture의 naturalWidth=1과 모바일 폭, Markdown 제목·강조·목록·표·코드·외부 링크 보호를 확인했다. 기존 text의 HTML 원문은 그대로 표시한다.
+
+운영 DB 마이그레이션 후 formatted-rollback.sql이 실제 PostgreSQL public RPC에서 세 형식·잘못된 형식 거부·팝업 format 변경 revision을 통과했다. 임시 세션/JWT fixture를 사용한 SQL 검증이며 실제 로그인/Auth/PostgREST 호출을 대신했다고 표시하지 않는다. 알림과 콘텐츠를 포함해 전부 rollback했다.
+
+parse5 AST→허용 태그/속성 DOM 재구성 방식이다. 일반 사용자 게시글/댓글의 HTML 실행을 허용하지 않는다. HTTPS 외부 이미지는 원본 제공처의 공개 접근이 가능해야 하며 이 기능에 파일 업로드/임의 CSS/스크립트 실행은 포함되지 않는다. 신규 parser chunk는 서식 콘텐츠가 있을 때만 로드한다. 공개 빌드의 이미지 CSP 검증은 배포 후 추가한다.
+
 ## 2026-11-13 안정성·화면·최적화
 
 테마/토큰 갱신 후 입력·포커스 유지, 오프라인/복구 후 입력 유지, 15초 조회 중단 안내, 홈 공지 부분 실패 후 글 영역 유지/재시도, 진행 중 공감 1회 요청을 실제 Chromium+fixture 응답으로 검증했다. 실제 Supabase 장애나 다수 동시 이용자 부하 테스트를 대체하지 않는다.
