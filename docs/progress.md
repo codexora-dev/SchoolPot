@@ -200,3 +200,9 @@ Security Advisor는 의도적인 private 기본 거부 RLS INFO 35와 기존 유
 live E2E 첫 시도는 문의 제출 뒤 details가 다시 닫혀 응답이 가려지는 상태를 테스트가 기다리지 못해 실패했다. 실제 문의 저장은 확인됐으며 재렌더 후 문의를 다시 펼치도록 검사를 수정했다. 두 번째는 운영 DB의 검색 충돌을 발견해 관리자 검증 단계가 완료되지 않아 중단했다. 두 임시 계정은 finally 정리로 삭제됐다. 세 번째는 최종 운영 DB에서 두 관리자의 실제 접수 이의 열람, 부관리자 답변/민감 문의 격리/해제 거절, 최고 관리자 해제와 정상 회원 검색을 롤백 트랜잭션으로 통과했다. 공개 사이트의 실제 제한 UI, 이의 제기, 문의, 제한 중 비밀번호 재확인 탈퇴와 탈퇴 후 기존 JWT 접근 거절까지 live E2E 1개를 통과했다.
 
 테스트에 사용한 세 계정 및 연결 작성 데이터의 잔여 0건, 회원 수 13 복원을 확인했다. QA에서 생성한 관리자 알림만 식별해 정리했다. 브라우저 검사는 실제 Supabase Auth/PostgREST/Edge를 사용했고, 관리자 자체의 외부 JWT 로그인은 비밀번호를 수집하지 않아 실행하지 않았다. 관리자 권한 검증은 운영 PostgreSQL의 기존 세션/실제 authenticated 역할 및 롤백으로 구분한다. 실제 여러 DB 연결의 동시 승인 부하 검증은 수행하지 않았다.
+
+최종 기능 코드 91aad199e6e66ca6bf32c06ac44a7e02adcdf6fb의 [CI](https://github.com/codexora-dev/SchoolPot/actions/runs/43445365536)와 [GitHub Pages](https://github.com/codexora-dev/SchoolPot/actions/runs/43445365738)가 성공했다. 실제 공개 HTML의 빌드 SHA 및 JS/CSS 12개 자산의 HTTP 200/MIME을 다시 확인했다. 수정 후 로컬 lint·Vitest 25·PGlite 101·브라우저 70(별도 live 3 제외)·build와 GitHub CI의 npm audit가 통과했다. 탈퇴 Edge는 v3, 운영 migration은 admin_hierarchy_and_appeals 및 governance_actor_role_lookup 두 개가 적용된 상태다.
+
+최종 공개 빌드에서 기존 account-live 테스트도 실행해 실제 가입, 자동로그인 선택·해제의 새 브라우저 차이, 잘못된 탈퇴 비밀번호 거절, 정상 탈퇴 및 재로그인 차단을 통과했다. 앞서 실제 제한 계정 live 테스트도 이의 제기·권리 문의·탈퇴·기존 JWT 거절을 통과했다. 사용한 임시 계정 네 개는 모두 삭제했고 저장소에 실제 키·비밀번호·세션을 커밋하지 않았다. 테스트 상태 파일은 tests/.local에 한정해 Git에서 제외한다.
+
+최종 점검 도중 기존 제한 1건이 운영 중 최고 관리자의 이의 제기 답변 및 해제 작업으로 변경됐음을 감사 시각(한국 시각 23:43)과 owner 역할로 확인했다. 이는 QA 롤백 검사 이후의 실제 운영 변경이며 되돌리지 않았다. 같은 시점의 실제 이의 제기 알림도 보존했다. 최초 migration 시점의 건수 보존 검증과 배포 이후 이용자/관리자 작업을 구분한다. 공개 배포 주소는 https://codexora-dev.github.io/SchoolPot/ 이다.

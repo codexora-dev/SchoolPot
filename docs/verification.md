@@ -175,3 +175,17 @@ DB에는 역할 위조·일반 회원 관리자 RPC 차단·부관리자의 직�
 `docs/screenshots/admin-governance-desktop.png`, `admin-governance-mobile.png`, `account-restriction-mobile.png`를 직접 열어 확인했다. 기존 관련 화면 캡처의 자동 덮어쓰기는 정리했다.
 
 이번 migration·Edge·Pages는 아직 운영에 적용하지 않았다. 운영 Auth/PostgREST/Edge를 통한 실제 역할/제재/이의 제기 흐름, 여러 실제 DB 연결의 동시 승인, 공개 배포 빌드 검증은 승인 후 진행할 항목이다. 기존 데이터 보존과 권한 이관 계획은 `admin-governance.md`를 따른다.
+
+## 2026-11-13 최종 운영 적용·Pages 검증
+
+- 승인된 두 운영 migration과 delete-account Edge v3 적용 완료. kminjae803=owner, yoonjihoo_0221=moderator.
+- 최종 기능 빌드: `91aad199e6e66ca6bf32c06ac44a7e02adcdf6fb`. [CI 성공](https://github.com/codexora-dev/SchoolPot/actions/runs/43445365536), [Pages 성공](https://github.com/codexora-dev/SchoolPot/actions/runs/43445365738).
+- 공개 HTML 빌드 식별자·JS/CSS 12개 자산 200 및 MIME 검증 통과.
+- 로컬 단위 25·DB 101·기본 브라우저 70(실제 서비스 3 기본 제외)·lint·build 통과. 기존 Edge 15 및 Deno check 통과, CI npm audit 통과.
+- 실제 Supabase Auth 회원의 역할 위조/관리 API 거절, 배포 사이트의 제한 팝업·Escape/URL 우회 거절·이의 제기·권리 문의·제한 중 탈퇴·삭제 후 JWT 거절: 별도 live E2E 통과.
+- 최종 공개 빌드의 실제 자동로그인 선택/해제 복원, 비밀번호 재확인 탈퇴 및 삭제 후 로그인 거절: 기존 account-live E2E 통과.
+- 운영 PostgreSQL의 실제 세션/역할로 owner/moderator/member 권한 검사 및 실제 QA 접수 이의의 양쪽 관리자 열람, 부관리자 답변/민감 문의 차단/제한 해제 차단, 최고 관리자 해제/정상 회원 검색을 검사하고 모두 롤백.
+- 실제 운영 관리자 외부 JWT 로그인 및 다중 DB 연결 동시 승인 부하를 자동화해 검사했다고 표시하지 않는다.
+- QA 계정과 연결 작성 내용 삭제 확인. 초기 데이터 건수 보존 후 실제 owner의 운영 해제 변경은 감사 시각을 확인해 보존.
+
+Security Advisor의 private 기본 거부 RLS INFO 35는 직접 테이블 권한 회수/디스패처 설계와 일치한다. 기존 [유출 비밀번호 보호 비활성 WARN](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)은 남아 있으며 이번 배포에서 Auth 유료 설정을 임의 변경하지 않았다. Performance Advisor의 기존 [anonymous_labels FK 인덱스 INFO](https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys) 1건과 미사용 인덱스 INFO 18건도 기능 실패로 표시하지 않는다.

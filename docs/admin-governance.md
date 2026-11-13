@@ -1,6 +1,6 @@
 # 관리자 권한·제재 운영 안내
 
-2026-11-13 사용자의 배포 승인으로 운영 DB와 역할 이관, 탈퇴 Edge v3 적용을 완료했다. Pages 배포와 최종 검증 결과는 docs/progress.md를 따른다.
+2026-11-13 사용자의 승인으로 운영 DB·역할 이관·탈퇴 Edge v3 및 GitHub Pages 배포를 완료했다. 실제 검증 범위와 결과는 docs/progress.md와 docs/verification.md를 따른다.
 
 ## 역할 이관
 
