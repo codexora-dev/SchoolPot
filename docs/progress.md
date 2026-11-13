@@ -7,6 +7,7 @@
 - 운영 DB 조사 후 remove_public_contact_and_age_prompt를 적용했다. 현재 정책 contact_email과 기본값을 제거하고 보관 정책의 contact_email 필드를 삭제했다. 공개 school_setup은 해당 필드를 반환하지 않는다. accounts Edge v5 ACTIVE로 배포했다. 반 설정이나 기존 커뮤니티 콘텐츠는 변경하지 않았다.
 - lint·Vitest 23·PGlite 77·Playwright 45(기본 live 2 제외)·Deno check/Edge 11·build 통과. 실제 Auth/Edge/PostgREST에서 연령·동의·문서 버전 없는 가입·로그인·소속 격리/변경 거부를 확인하고 QA 계정 2개를 삭제했다. 테스트 기대값을 새 동작에 맞췄으며 새 연령·동의 시각 null과 공개 이메일 필드 부재를 검증했다.
 - 앞선 공개 이메일·연령 확인 유지 지침보다 이번 사용자 결정이 우선한다. 안내 제거를 법적 적합성 보장이나 법적 고지 의무 면제로 표시하지 않는다. 공개 사이트 배포 확인은 검증 후 기록한다.
+- 공개 배포 확인 완료: main 01fadd8fd77c114d1701bd139601939afebead0c, Pages run 43385554869 success. 공개 HTML 빌드 ID·JS/CSS 2개 HTTP/MIME 통과. 실제 Chromium 1440/390px에서 가입 체크박스/안내 문구 없음, 7반 선택, 개인정보 3개 섹션·문의/국외 처리 섹션 없음, JS 오류 0개를 확인했다. 공개 account-live 가입 API·로그인/자동로그인/탈퇴도 1개 통과했고 QA 계정을 삭제했다. 원격의 선행 b2ff31b 커밋을 rebase로 보존해 push 거절을 해결했다. 문의가 제거된 화면과 메뉴/부제 문구도 일치시켰고 관련 화면 10개를 추가 재검증했다.
 
 ## 2026-11-12 동의 없는 소속 선택·반응형 화면 개편
 
