@@ -129,7 +129,16 @@ test('관리자 공지 Markdown 미리보기·전송·회원 화면 표시', asy
     if (p.p_action === 'get_notice') return notices.find((n) => n.id === p.p_payload.id);
     return [];
   });
+  await page.route('**/rest/v1/rpc/manage_notices', (r) => {
+    const { p_action, p_payload } = r.request().postDataJSON();
+    if (p_action === 'list') return r.fulfill({ json: notices });
+    if (p_action === 'get') return r.fulfill({ json: notices.find((n) => n.id === p_payload.id) });
+    payload = p_payload;
+    notices = [{ ...payload, id, revision: 1, created_at: new Date().toISOString() }];
+    return r.fulfill({ json: { ok: true, id } });
+  });
   await page.goto('/#/admin?tab=notice');
+  await page.getByRole('button', { name: '＋ 공지 등록', exact: true }).click();
   await page.getByLabel('제목', { exact: true }).fill('새 공지 안내');
   await page.getByLabel('작성 형식', { exact: true }).selectOption('markdown');
   await page

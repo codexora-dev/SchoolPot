@@ -29,8 +29,18 @@ async function member(page, isAdmin = false) {
     created_at: '2026-11-13T05:00:00Z',
     body: '## 안내 본문\n\n**필독 사항**',
     content_format: 'markdown',
+    revision: 1,
   }));
   const calls = [];
+  await page.route('**/rest/v1/rpc/manage_notices', (r) => {
+    const { p_action, p_payload } = r.request().postDataJSON();
+    if (p_action === 'delete') {
+      items = items.filter((n) => n.id !== p_payload.id);
+      return r.fulfill({ json: { ok: true } });
+    }
+    if (p_action === 'get') return r.fulfill({ json: items.find((n) => n.id === p_payload.id) });
+    return r.fulfill({ json: items });
+  });
   await page.route('**/rest/v1/rpc/community', (r) => {
     const { p_action, p_payload } = r.request().postDataJSON();
     calls.push({ action: p_action, payload: p_payload });

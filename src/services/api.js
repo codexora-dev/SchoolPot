@@ -55,7 +55,8 @@ export async function rpc(name, payload = {}) {
   const request = client.rpc(name, payload);
   const readOnly =
     ['school_setup', 'board_catalog', 'site_popups'].includes(name) ||
-    readActions.has(payload.p_action);
+    readActions.has(payload.p_action) ||
+    (name === 'manage_notices' && ['list', 'get'].includes(payload.p_action));
   const deadline = readOnly ? new window.AbortController() : null;
   const timer = deadline ? setTimeout(() => deadline.abort(), 15000) : null;
   let response;
@@ -89,6 +90,8 @@ export function friendlyError(error) {
     STALE_BOARD: '다른 게시판 변경사항이 있어요. 목록을 새로고침한 뒤 다시 시도해 주세요.',
     STALE_FEEDBACK: '다른 문의 처리 내역이 있어요. 목록을 새로고침한 뒤 다시 시도해 주세요.',
     STALE_POPUP: '다른 변경사항이 있어요. 팝업 목록을 새로고침한 뒤 다시 시도해 주세요.',
+    STALE_NOTICE:
+      '다른 관리자가 공지를 변경했어요. 창을 닫고 목록을 새로고침한 뒤 다시 시도해 주세요.',
     POPUP_LIMIT: '동시에 게시할 수 있는 팝업은 최대 3개예요. 기존 팝업을 중지한 뒤 등록해 주세요.',
     POPUP_STORAGE_LIMIT: '등록된 팝업이 100개예요. 필요 없는 팝업을 정리한 뒤 등록해 주세요.',
   };

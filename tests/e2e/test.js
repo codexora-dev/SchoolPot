@@ -16,6 +16,11 @@ export const test = base.extend({
       );
       await page.route('**/rest/v1/rpc/board_catalog', (route) => route.fulfill({ json: boards }));
       await page.route('**/rest/v1/rpc/manage_boards', (route) => route.fulfill({ json: boards }));
+      await page.route('**/rest/v1/rpc/manage_notices', (route) =>
+        route.request().postDataJSON().p_action === 'list'
+          ? route.fulfill({ json: [] })
+          : route.fulfill({ status: 400, json: { code: 'P0001', message: 'NOT_FOUND' } }),
+      );
     }
     await use(page);
   },

@@ -1,11 +1,11 @@
-import { el, field, button, link, toast, empty, date } from '../lib/dom.js';
+import { el, button, link, toast, empty, date } from '../lib/dom.js';
 import { pageTitle } from '../components/layout.js';
 import { call } from '../services/community.js';
 import { boardManager } from './admin-boards.js';
 import { feedbackManager } from './feedback.js';
 import { popupManager } from './admin-popups.js';
 import { classManager, privacyManager } from './admin-classes.js';
-import { contentEditor } from '../components/content-editor.js';
+import { noticeManager } from './admin-notices.js';
 export async function adminPage(params, reload) {
   const tab = params.get('tab') || 'overview';
   const main = el('div');
@@ -14,6 +14,7 @@ export async function adminPage(params, reload) {
   if (tab === 'boards') main.append(await boardManager(reload));
   if (tab === 'feedback') main.append(await feedbackManager(params, reload));
   if (tab === 'popups') main.append(await popupManager(reload));
+  if (tab === 'notice') main.append(await noticeManager(params, reload));
   const action = async (name, data) => {
     try {
       await call(name, data);
@@ -157,24 +158,6 @@ export async function adminPage(params, reload) {
       ),
     );
   }
-  if (tab === 'notice') {
-    main.append(
-      el(
-        'form',
-        {
-          class: 'panel form-stack',
-          onSubmit: async (e) => {
-            e.preventDefault();
-            await action('admin_notice', Object.fromEntries(new FormData(e.target)));
-          },
-        },
-        el('h2', {}, '공지사항 등록'),
-        field('제목', 'title', 'text', { required: true, minlength: 2, maxlength: 120 }),
-        contentEditor(),
-        el('button', { class: 'button primary', type: 'submit' }, '등록하고 알림 보내기'),
-      ),
-    );
-  }
   if (tab === 'audit') {
     const logs = await call('admin_audit');
     main.append(
@@ -198,7 +181,7 @@ export async function adminPage(params, reload) {
       ),
     );
   }
-  return el(
+  const page = el(
     'section',
     {},
     pageTitle(
@@ -217,11 +200,22 @@ export async function adminPage(params, reload) {
         feedback: '건의·오류 관리',
         members: '회원 관리',
         reports: '신고 관리',
-        notice: '공지 등록',
+        notice: '공지 관리',
         popups: '팝업 관리',
         audit: '작업 기록',
       }).map(([k, v]) => link(v, `#/admin?tab=${k}`, `tab ${tab === k ? 'selected' : ''}`)),
     ),
     main,
   );
+  window.requestAnimationFrame(() => {
+    if (!page.isConnected) return;
+    const tabs = page.querySelector('.tabs'),
+      selected = tabs.querySelector('.selected');
+    if (selected && tabs.scrollWidth > tabs.clientWidth)
+      tabs.scrollLeft +=
+        selected.getBoundingClientRect().left -
+        tabs.getBoundingClientRect().left -
+        (tabs.clientWidth - selected.clientWidth) / 2;
+  });
+  return page;
 }

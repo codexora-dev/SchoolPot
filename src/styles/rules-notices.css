@@ -104,6 +104,12 @@
   margin-block: 16px;
   overflow-wrap: anywhere;
 }
+.notice-editor {
+  width: min(740px, calc(100vw - 32px));
+}
+.notice-admin-card .actions {
+  flex-wrap: wrap;
+}
 .notice-detail .content-body {
   padding-block: 28px;
   margin-top: 24px;

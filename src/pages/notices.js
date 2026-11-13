@@ -1,4 +1,4 @@
-import { el, link, button, date, empty, errorBox, toast } from '../lib/dom.js';
+import { el, link, button, date, empty, errorBox } from '../lib/dom.js';
 import { pageTitle } from '../components/layout.js';
 import { call } from '../services/community.js';
 import { contentBody } from '../components/content-body.js';
@@ -122,19 +122,28 @@ export async function noticePage(id, params, state, reload) {
       el('span', { class: 'board-chip' }, '공지사항'),
       el('h1', {}, notice.title),
       el('time', { datetime: notice.created_at, class: 'meta' }, date(notice.created_at)),
+      notice.updated_at && notice.updated_at !== notice.created_at
+        ? el('p', { class: 'hint' }, `수정 ${date(notice.updated_at)}`)
+        : null,
       contentBody(notice.body, notice.content_format),
       state.me?.is_admin
-        ? button(
-            '공지 삭제',
-            async () => {
-              const { confirmDialog } = await import('./community.js');
-              confirmDialog('이 공지를 삭제할까요?', async () => {
-                await call('admin_delete', { kind: 'notice', id: notice.id });
-                toast('공지를 삭제했어요.');
-                location.hash = back.slice(1);
-              });
-            },
-            'text-button danger-text',
+        ? el(
+            'div',
+            { class: 'actions' },
+            button('공지 수정', async () => {
+              const { editNotice } = await import('./admin-notices.js');
+              await editNotice(notice.id, reload);
+            }),
+            button(
+              '공지 삭제',
+              async () => {
+                const { deleteNotice } = await import('./admin-notices.js');
+                deleteNotice(notice, () => {
+                  location.hash = back.slice(1);
+                });
+              },
+              'button danger',
+            ),
           )
         : null,
     ),
