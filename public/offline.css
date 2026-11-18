@@ -1,0 +1,45 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #243c30;
+  background: #f5f7f5;
+  color-scheme: light dark;
+}
+body {
+  margin: 0;
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+}
+main {
+  max-width: 32rem;
+  padding: 2rem;
+  line-height: 1.7;
+}
+strong {
+  color: #287560;
+}
+h1 {
+  font-size: 1.8rem;
+}
+button {
+  background: #287560;
+  color: white;
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0.8rem 1.3rem;
+  font: inherit;
+  cursor: pointer;
+}
+button:focus-visible {
+  outline: 3px solid #79a98b;
+  outline-offset: 4px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    background: #13211a;
+    color: #e6f0e8;
+  }
+  strong {
+    color: #9bd0ad;
+  }
+}

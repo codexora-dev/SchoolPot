@@ -754,4 +754,3 @@ begin
  insert into private.admin_audit_logs(actor_id,action,target_id) values(u,'notice_'||p_action,v_id);
  return jsonb_build_object('ok',true,'id',v_id);
 end $$;
-
