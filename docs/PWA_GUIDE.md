@@ -1,5 +1,7 @@
 # PWA 사용·개발 안내
 
+2026-11-19 운영 Pages의 manifest·SW·아이콘·오프라인 파일과 하위 경로 자산 응답을 확인했습니다. 실제 Chrome SW 구독·push 이벤트도 확인했으며 기기별 설치·OS 팝업·클릭 검증과는 구분합니다. 상세 결과는 [운영 검증 기록](V2_RELEASE_VERIFICATION.md)에 있습니다.
+
 ## 설치
 
 SchoolPot / 짧은 이름 스쿨팟, standalone, 기존 녹색(#287560)과 모자 로고를 사용합니다. manifest의 id/start_url/scope와 아이콘은 상대 경로로 구성하여 GitHub Pages `/SchoolPot/`를 지원합니다.

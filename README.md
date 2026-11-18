@@ -6,7 +6,7 @@
 
 ## V2 작업 상태 (2026-11-19)
 
-V2는 기존 프로젝트에 구현했습니다. 후속 사용자 승인으로 운영 DB·Vault·서명 발송 스케줄러·Edge를 적용하고 실제 서버 검증을 수행했습니다. Pages 배포와 공지·팝업 게시를 진행 중입니다. 최신 상태는 [운영 검증 기록](docs/V2_RELEASE_VERIFICATION.md)을 참고하세요.
+V2 운영 DB·Vault·서명 발송 스케줄러·Edge와 GitHub Pages 배포를 완료했습니다. 회원용 업데이트 공지와 공개 설치·알림 안내 팝업도 게시했습니다. 실제 Chrome 푸시 이벤트 수신을 확인했으며, 기기별 OS 표시·설치 검증은 남아 있습니다. [운영 검증 기록](docs/V2_RELEASE_VERIFICATION.md)에 배포 SHA·테스트·남은 사항을 기록했습니다.
 
 - PWA 설치 안내·선택형 업데이트·정적 UI 캐시·오프라인 화면.
 - 알림 센터·계정별 설정·서버 미읽음 배지·다른 기기와 30초 동기화.
@@ -93,7 +93,7 @@ admin 계정은 사용자 요청에 따라 서버에서 관리자 지정했습�
     tests/unit·database·e2e·integration
     docs            설계·보안·배포·진행·검증
 
-연결/Pages 배포는 docs/DEPLOYMENT.md, 검증 결과는 docs/verification.md, 보안 경계는 docs/security.md를 참고하세요. 파일 첨부·사용자 차단 UI·V3는 이번 범위에 포함하지 않습니다. V2 푸시 코드는 구현했으며 실제 운영 수신은 서버 설정 및 승인 후 검증해야 합니다. 정식 운영 정책과 이용약관/개인정보 처리방침은 운영자가 확정해야 합니다.
+연결/Pages 배포는 docs/DEPLOYMENT.md, 최신 V2 검증은 docs/V2_RELEASE_VERIFICATION.md, 이전 검증은 docs/verification.md, 보안 경계는 docs/security.md를 참고하세요. 파일 첨부·사용자 차단 UI·V3는 이번 범위에 포함하지 않습니다. 정식 운영 정책과 이용약관/개인정보 처리방침은 운영자가 확정해야 합니다.
 
 ## 모바일·PC GUI
 

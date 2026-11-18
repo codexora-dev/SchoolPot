@@ -226,3 +226,23 @@ live E2E 첫 시도는 문의 제출 뒤 details가 다시 닫혀 응답이 가�
 - 남은 작업: 공식 보안 패치/검증된 대응 후 전체 감사 통과, 사전 승인, 운영 migration·Edge·Pages 적용, 서버 VAPID/토큰/주기 실행 설정, 실기기/실서버 회귀 검증, 실제 업데이트 공지·팝업 게시. 법적 운영 완료·즉시 완전 데이터 삭제·실제 연령/재학생 인증을 주장하지 않는다.
 
 - 최종 추가 확인: 제한 계정 전환 시 일반 알림 폴링을 중단하며, 본인 운영 문의/요청의 자기 알림은 생략하되 비활성 수신 설정에서도 필수 제재 통지는 기록한다. 삭제된 알림 댓글의 직접 이동에는 서버 존재 확인과 삭제 안내를 추가했다. 관련 PostgreSQL/단위/브라우저 검증을 수행했다.
+
+## 2026-11-19 — 취약점 대응 및 V2 운영 배포·공지 완료
+
+사용자의 “그 문제 대응해주고 나머지 작업들도 진행해줘” 후속 지시에 따라 앞서 제시한 의존성 대응·DB/Edge/Pages·공지/팝업 게시를 진행했다. 유료 변경은 포함하지 않았다. 적용 전 지정 owner/moderator 및 V1 핵심 함수 4개의 본문 hash를 대조했고 함수 정의를 Git 제외 경로에 보관했다.
+
+picomatch ReDoS에는 MIT 출처·원본/수정 해시를 보존한 비공개 `@schoolpot/picomatch@4.0.7+schoolpot.1`을 만들었다. 복잡한 반복 wildcard extglob을 리터럴 처리하며 정상 glob·시간 제한 위험 패턴·모든 Vite/Vitest 소비자 연결·SHA256 검사를 통과했다. npm override의 단순 file/tarball 방식은 npm10에서 실패해 루트 file 의존성과 `$picomatch` 참조로 해결했다. 전체/production npm audit 0, Deno lock audit 0이며 공식 패치라고 표시하지 않았다.
+
+V2 기본·Vault·스케줄러 migration 6개를 운영 적용했다. private 서비스 테이블은 35→43개 모두 RLS를 유지하며 현재 계정·세션·소속·제한·역할 검사를 보존했다. CLI의 캐시된 계정은 권한이 없어 올바른 관리형 연결을 사용했다. push-dispatch v3 ACTIVE, import_map_path 명시로 기존 절대 경로 오류를 해결했다. VAPID는 인증된 최초 작업에서 서버 생성·Vault 저장하고 공개 키만 Git 제외 .env.local/Pages 변수에 설정했다.
+
+pg_net의 관리형 PUBLIC 대기열 권한을 발견했다. 광범위 Vault 권한 회수는 관리형 암호 함수에서 실패해 해당 트랜잭션 전체를 롤백했고 소유 범위 내 cron 권한만 좁혔다. 영구 bearer 토큰 대신 60초 HMAC 시각·nonce와 서버 1회 claim으로 전환했다. bootstrap 토큰은 폐기했고 VAPID는 유지했다. 매분 cron·실제 서명 HTTP 200·nonce 기록·영구 Authorization 헤더 대기열 0건을 확인했다. 관리형 대기열 권한 자체를 모두 회수했다고 표시하지 않는다.
+
+lint·단위32·PGlite121·브라우저74(기존 live3 제외)·PWA3·Deno21·Deno check·build를 통과했다. 실제 accounts/Auth/PostgREST/Edge로 임시2계정의 가입·소속·타인 소유권 위조 무효화·관리/worker RPC 거절·회원 Edge403을 확인했다. 실제 PostgreSQL rollback으로 멘션/익명 ID 비노출/답글·구독 중복/타인 알림 거절/삭제 댓글/공지 수정/제재·해제·이의를 검증했다. QA SQL의 없어진 기본 게시판 가정은 실제 활성 게시판 선택으로 수정했으며 운영 게시판을 바꾸지 않았다.
+
+첫 커밋 ccbcfd7은 public PWA 파일 누락으로 CI/Pages 빌드에서 실패했다. 모든 public 파일을 추적한 289db00d6007bd74e19eac1cccb91007925da00a로 고쳐 [Checks](https://github.com/codexora-dev/SchoolPot/actions/runs/44333598964)와 [Pages](https://github.com/codexora-dev/SchoolPot/actions/runs/44333598962)가 성공했다. 실제 HTML 빌드 SHA·JS/CSS16개·manifest·SW·아이콘·오프라인 파일을 확인했다. 이후 문서/테스트 HEAD와 운영 빌드 SHA를 구분한다.
+
+격리한 실제 Chrome에서 운영 SW·QA 로그인·기기 연결·FCM201·worker sent·브라우저 push 이벤트를 확인했다. 자동화 getNotifications는 비어 OS 팝업 표시 성공으로 간주하지 않는다. 전송 관찰의 시점 경쟁을 준비/발송 표식으로 맞추고 동작하지 않는 진단 변수를 제거했다. 임시2계정은 실제 탈퇴 Edge로 삭제했고 계정·세션·구독 잔여0을 확인했다. 자격 증명 파일·격리 Chrome 프로필·표식을 삭제했다. CUA/native는 커널 경로 초기화 오류로 사용하지 못해 격리 Playwright Chrome으로 검증했다.
+
+배포 확인 후 실제 owner 계정·현재 DB 세션·역할을 검사하는 관리형 트랜잭션에서 기존 관리 RPC로 중요 공지 deff0cab-de7c-4e1b-83fc-18560ad3d041와 공개 팝업 4f92bd60-38b9-4d16-a123-1965fbf7a858을 게시했다. 관리 경로와 build를 v2_release_management 감사에 남겼으며 owner 외부 JWT 로그인 검증으로 표시하지 않는다. 기존 팝업·활성2개·기본 닫기를 보존했다. 비회원 실제 팝업/공지 링크/390px 화면과 공지 본문 접근 거절을 확인했다. 최종 회원17/글4/댓글3/공지2/알림45로 기존 데이터 보존 및 신규 공지1·서버 수신 조건에 맞는 알림10을 확인했다.
+
+한국어 문서에 실제 상태·migration 버전 대응표·실패 해결·한계를 기록했다. 기존 Auth 유출 비밀번호 보호 WARN은 Free 플랜에서 Pro 이상 기능이므로 남았으며 임의 유료 전환하지 않았다. 실기기 설치·OS 표시·클릭, 실제 다중 기기 동기화·장시간 동작/부하는 추가 확인 대상이다. 법적 운영 완료나 모든 기기 검증 완료를 주장하지 않는다.

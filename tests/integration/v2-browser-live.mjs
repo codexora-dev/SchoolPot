@@ -1,5 +1,5 @@
 import { chromium } from '@playwright/test';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 if (process.env.SCHOOLPOT_V2_LIVE_TEST !== '1') throw new Error('Explicit live QA opt-in required');
 const qa = JSON.parse(await readFile('tests/.local/v2/hosted-qa.json', 'utf8'));
@@ -21,6 +21,7 @@ const report = {
   serviceWorker: false,
   subscription: false,
   received: false,
+  pushEventReceived: false,
 };
 try {
   await context.grantPermissions(['notifications'], { origin: new URL(root).origin });
@@ -38,6 +39,15 @@ try {
     await navigator.serviceWorker.ready;
   });
   report.serviceWorker = true;
+  const worker =
+    context.serviceWorkers().find((item) => item.url().endsWith('/sw.js')) ||
+    (await context.waitForEvent('serviceworker'));
+  await worker.evaluate(() => {
+    globalThis.schoolpotQaPushEvents = 0;
+    globalThis.addEventListener('push', () => {
+      globalThis.schoolpotQaPushEvents++;
+    });
+  });
   await page.getByRole('button', { name: '이 기기 알림 연결', exact: true }).click();
   for (let i = 0; i < 30; i++) {
     report.subscription = await page.evaluate(async () =>
@@ -54,12 +64,31 @@ try {
   if (report.subscription) {
     await writeFile('tests/.local/v2/push-ready.json', JSON.stringify({ uid: qa.accounts[0].uid }));
     console.log('Production Chrome subscribed; ready for private QA push event.');
+    for (let i = 0; i < 180; i++) {
+      if (
+        await access('tests/.local/v2/push-triggered.json').then(
+          () => true,
+          () => false,
+        )
+      )
+        break;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
     for (let i = 0; i < 90; i++) {
       report.received = await page.evaluate(
         async () => (await (await navigator.serviceWorker.ready).getNotifications()).length > 0,
       );
-      if (report.received) break;
+      report.pushEventReceived = await worker
+        .evaluate(() => globalThis.schoolpotQaPushEvents > 0)
+        .catch(() => false);
+      if (report.received || report.pushEventReceived) break;
       await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    if (report.pushEventReceived) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      report.received = await page.evaluate(
+        async () => (await (await navigator.serviceWorker.ready).getNotifications()).length > 0,
+      );
     }
     await page.getByRole('button', { name: '이 기기 알림 해제', exact: true }).click();
   } else report.reason = 'PUSH_SERVICE_REGISTRATION_UNAVAILABLE_IN_AUTOMATED_CHROME';

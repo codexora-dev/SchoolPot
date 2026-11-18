@@ -1,6 +1,6 @@
-# V2 배포 가이드 — 운영 적용 전 승인 필요
+# V2 배포 가이드
 
-2026-11-19 사용자 후속 승인으로 V2 운영 적용을 진행했습니다. DB·Edge·Vault·서명 스케줄러는 적용 및 실제 서버 검증을 마쳤으며 Pages/공지/팝업 상태는 [운영 검증 기록](V2_RELEASE_VERIFICATION.md)을 우선 확인합니다. 이전 단계의 picomatch 감사 차단은 로컬 보안 수정판과 회귀 테스트로 대응했고 전체 감사 0건을 확인했습니다. 공식 패치 릴리스로 가장하지 않으며 vendor/picomatch/README.schoolpot.md에 범위를 기록합니다.
+2026-11-19 사용자 후속 승인으로 DB·Edge·Vault·서명 스케줄러·Pages 운영 배포와 공지·팝업 게시를 완료했습니다. 실제 적용 이력은 [운영 검증 기록](V2_RELEASE_VERIFICATION.md)을 우선 확인합니다. 이전 picomatch 감사 차단은 로컬 보안 수정판과 회귀 테스트로 대응했고 전체 감사 0건을 확인했습니다. 공식 패치 릴리스로 가장하지 않으며 vendor/picomatch/README.schoolpot.md에 범위를 기록합니다. 향후 위험한 운영 변경은 별도 승인 대상입니다.
 
 ## 1. 사전 확인
 
@@ -12,11 +12,11 @@
 
 ## 2. DB와 Edge
 
-새 migration은 `supabase/migrations/20261118134623_schoolpot_v2.sql` 하나입니다. 승인 후 현재 프로젝트에 이 변경만 트랜잭션으로 적용합니다. private 테이블/RLS/직접 권한 회수/공개 invoker/인증된 private dispatcher 및 service_role 전용 발송 함수가 포함됩니다. 기존 owner/moderator와 작성 데이터는 보존합니다.
+V2 기본 migration은 `supabase/migrations/20261118134623_schoolpot_v2.sql`이며 Vault·스케줄러 보완을 포함해 총 6개를 순서대로 적용했습니다. 파일/원격 버전 대응표는 운영 검증 기록에 있습니다. 현재 프로젝트에 재적용하지 마세요. private 테이블/RLS/직접 권한 회수/공개 invoker/인증된 private dispatcher 및 service_role 전용 발송 함수가 포함되며 기존 owner/moderator와 작성 데이터는 보존합니다.
 
 `push-dispatch`를 `supabase/functions/push-dispatch/deno.json` 및 lockfile과 함께 배포합니다. verify_jwt=false는 플랫폼 JWT 검사 대신 아래 서버 전용 스케줄러 인증을 사용하기 때문이며, 무인증 허용이 아닙니다. 기존 accounts/neis/delete-account를 교체할 필요는 없습니다.
 
-서버 secrets:
+환경변수 방식의 서버 설정 대안 (현재 운영은 다음 절의 Vault 사용):
 
 | 이름                                     | 값/보관 위치                                                           |
 | ---------------------------------------- | ---------------------------------------------------------------------- |
@@ -57,7 +57,7 @@ select private.invoke_push_scheduler(); -- trusted DB operator only
 - 전송 실패/410 기기 비활성화/방해금지/묶음/빈도제한·시도 로그, Edge/DB 자원 사용량.
 - 원격 advisers 및 변경 전후 실제 데이터 건수. 현재 보안 점검에서 기존 유출 비밀번호 차단 비활성 경고를 확인했으며 인증 운영 설정은 변경하지 않았습니다.
 
-PGlite·mock 브라우저·암호화 요청 생성은 실제 공급자 수신 검증을 대신하지 않습니다. iOS/Android/Windows 실제 알림 수신은 아직 검증하지 않았습니다.
+PGlite·mock 브라우저·암호화 요청 생성은 실제 공급자 수신 검증을 대신하지 않습니다. 운영 Chrome에서 실제 FCM 접수와 push 이벤트 수신은 확인했습니다. 자동화 Chrome의 OS 팝업 표시 및 iOS/Android 실기기 설치·수신·클릭은 아직 확인하지 않았습니다.
 
 ## 6. 요청된 공지·팝업 게시
 

@@ -58,7 +58,17 @@ feedback API의 작성자 값은 auth.uid()로만 정합니다. 본인 목록은
 
 [유출 비밀번호 보호 설정](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) 비활성 WARN 1건도 확인했습니다. 팝업과 별개인 Auth 설정이며, 공식 문서상 Pro 이상 기능이므로 임의의 유료 플랜 변경은 하지 않았습니다.
 
-## 2026-11-18 V2 점검
+## 2026-11-19 V2 운영 보안 점검
+
+이전 picomatch 감사 실패는 MIT 출처·원본/수정 해시를 유지한 비공개 보안 수정판 `@schoolpot/picomatch@4.0.7+schoolpot.1`로 대응했습니다. 복잡한 반복 wildcard extglob을 리터럴 처리하며 위험 패턴 시간 제한·정상 glob 호환성·모든 빌드 소비자 연결 검사를 통과했습니다. 전체 npm audit 0건이고 GitHub 새 체크아웃 CI도 통과했습니다. 공식 수정 릴리스로 표시하지 않으며 upstream 수정 후 교체를 검토합니다.
+
+운영의 pg_net 관리형 대기열 기본 PUBLIC 권한을 발견해 영구 인증 토큰을 넣는 방식을 제거했습니다. Vault 비밀로 시각·nonce를 HMAC 서명하고 Edge 60초 검증·서버 nonce unique claim으로 재사용을 막습니다. 초기 bootstrap 토큰은 폐기하고 VAPID는 보존했습니다. 관리형 대기열 권한을 모두 회수했다고 주장하지 않습니다. Vault 원문과 worker RPC의 anon/authenticated 직접 접근 거절, 일반 회원 JWT의 발송 Edge 403, 실제 서명 요청 200 및 토큰 없는 대기열을 확인했습니다.
+
+private 서비스 테이블 43개 RLS 및 owner/moderator를 보존했습니다. 실제 QA Auth/PostgREST 소유권·관리 API 거절과 원격 rollback 권한 검사를 수행했고 QA 계정은 탈퇴 API로 정리했습니다. 서버 키는 Vault/서버 런타임에만, 공개 VAPID 키는 Git 제외 환경 파일과 빌드 변수에만 보관합니다. [운영 검증 기록](V2_RELEASE_VERIFICATION.md)에 실제 검증과 자동화 한계를 구분했습니다.
+
+기존 Auth 유출 비밀번호 보호 WARN은 남아 있습니다. 실제 Free 플랜이며 [공식 문서](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)상 Pro 이상 기능입니다. 유료 플랜을 임의 변경하지 않았습니다.
+
+## 2026-11-18 V2 점검 (해결 전 기록)
 
 새 데이터는 private/RLS/직접 권한 회수와 현재 계정·세션·소속·제한·DB 역할 검사로 관리합니다. 푸시 발송 RPC는 service_role만 호출하며 스케줄러 Edge는 별도 비밀 인증과 SSRF 제한을 사용합니다. 다른 회원의 알림·설정·기기·북마크를 변경하지 못하도록 PGlite에서 실제 권한을 실행했습니다. 신고 결과의 내부 사유, 익명 작성자 ID, 푸시 endpoint/키, 잠금 화면의 민감 본문을 응답에서 제외했습니다.
 
