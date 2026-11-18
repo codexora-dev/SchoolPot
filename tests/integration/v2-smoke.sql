@@ -1,0 +1,57 @@
+-- Run only while the two temporary accounts from v2-live.mjs exist.
+-- All public-content fixtures and their notifications are rolled back.
+begin;
+do $$begin
+ if (select count(*) from private.account_handles where username like 'v2qa%')<>2 then raise exception 'QA_ACCOUNT_COUNT';end if;
+end $$;
+select set_config('qa.v2.a',(select jsonb_build_object('sub',s.user_id,'session_id',s.id,'role','authenticated')::text from auth.sessions s join private.account_handles h on h.user_id=s.user_id where h.username like 'v2qa%' order by h.username,s.created_at desc limit 1),true);
+select set_config('qa.v2.b',(select jsonb_build_object('sub',s.user_id,'session_id',s.id,'role','authenticated')::text from auth.sessions s join private.account_handles h on h.user_id=s.user_id where h.username like 'v2qa%' and s.user_id<>(current_setting('qa.v2.a')::jsonb->>'sub')::uuid order by h.username,s.created_at desc limit 1),true);
+select set_config('qa.v2.owner',(select jsonb_build_object('sub',s.user_id,'session_id',s.id,'role','authenticated')::text from auth.sessions s join private.user_roles r on r.user_id=s.user_id where r.role='owner' order by s.created_at desc limit 1),true);
+select set_config('qa.v2.board',(select id from private.boards where is_active and can_post and kind='general' order by position limit 1),true);
+set local role authenticated;
+do $$declare a uuid:=(current_setting('qa.v2.a')::jsonb->>'sub')::uuid;b uuid:=(current_setting('qa.v2.b')::jsonb->>'sub')::uuid;p uuid;c uuid;result jsonb;pref jsonb;note uuid;target jsonb;begin
+ perform set_config('request.jwt.claims',current_setting('qa.v2.b'),true);
+ pref:=public.schoolpot_v2('preferences');perform public.schoolpot_v2('save_preferences',pref||jsonb_build_object('mention_discoverable',true,'comment_enabled',true,'push_enabled',false));
+ perform set_config('request.jwt.claims',current_setting('qa.v2.a'),true);
+ pref:=public.schoolpot_v2('preferences');perform public.schoolpot_v2('save_preferences',pref||jsonb_build_object('comment_enabled',true,'push_enabled',false));
+ p:=(public.community('save_post',jsonb_build_object('board',current_setting('qa.v2.board'),'anonymous',true,'title','트랜잭션 안에서만 존재하는 QA','body','공개 전 롤백','mentions',jsonb_build_array(b)))->>'id')::uuid;
+ if public.community('get_post',jsonb_build_object('id',p)) ? 'author_id' then raise exception 'QA_ANONYMOUS_ID_LEAK';end if;
+ perform set_config('request.jwt.claims',current_setting('qa.v2.b'),true);
+ perform public.schoolpot_v2('subscribe',jsonb_build_object('post_id',p,'enabled',true));
+ perform public.schoolpot_v2('bookmark',jsonb_build_object('post_id',p,'enabled',true));
+ c:=(public.community('save_comment',jsonb_build_object('post_id',p,'body','트랜잭션 QA 댓글'))->>'id')::uuid;
+ perform set_config('request.jwt.claims',current_setting('qa.v2.a'),true);
+ perform public.community('save_comment',jsonb_build_object('post_id',p,'parent_id',c,'body','답글·멘션·구독 중복 검증','mentions',jsonb_build_array(b)));
+ perform set_config('request.jwt.claims',current_setting('qa.v2.b'),true);
+ result:=public.schoolpot_v2('notifications');
+ if (result->>'unread')::int<>2 or jsonb_array_length(result->'items')<>2 then raise exception 'QA_NOTIFICATION_DEDUP';end if;
+ note:=(result->'items'->0->>'id')::uuid;
+ perform set_config('request.jwt.claims',current_setting('qa.v2.a'),true);
+ perform public.schoolpot_v2('read',jsonb_build_object('id',note,'user_id',b));
+ perform set_config('request.jwt.claims',current_setting('qa.v2.b'),true);
+ if (public.schoolpot_v2('unread')->>'unread')::int<>2 then raise exception 'QA_CROSS_USER_READ';end if;
+ perform public.schoolpot_v2('read',jsonb_build_object('id',note));
+ if (public.schoolpot_v2('unread')->>'unread')::int<>1 then raise exception 'QA_READ_COUNT';end if;
+ perform public.community('delete_comment',jsonb_build_object('id',c));
+ if (public.community('get_post',jsonb_build_object('id',p,'comment_id',c))->>'notification_comment_deleted')::boolean is distinct from true then raise exception 'QA_DELETED_COMMENT';end if;
+ perform set_config('request.jwt.claims',current_setting('qa.v2.owner'),true);
+ note:=(public.manage_notices('save',jsonb_build_object('title','롤백할 QA 공지','body','본문','owner_only',true))->>'id')::uuid;
+ perform public.manage_notices('save',jsonb_build_object('id',note,'revision',1,'title','롤백할 QA 공지 수정','body','수정 본문','owner_only',true));
+ perform set_config('request.jwt.claims',current_setting('qa.v2.b'),true);
+ result:=public.schoolpot_v2('notifications');
+ if (select count(*) from jsonb_array_elements(result->'items') n where n->>'notice_id'=note::text)<>1 then raise exception 'QA_NOTICE_REPEAT';end if;
+ perform set_config('request.jwt.claims',current_setting('qa.v2.owner'),true);
+ perform public.governance('apply',jsonb_build_object('target_id',a,'level','1','reason','롤백할 QA 제재','rule','QA 규정','operation_id',gen_random_uuid()));
+ perform set_config('request.jwt.claims',current_setting('qa.v2.a'),true);
+ begin perform public.schoolpot_v2('notifications');raise exception 'QA_RESTRICTION_BYPASS';exception when others then if sqlerrm not like '%SUSPENDED%' then raise;end if;end;
+ result:=public.governance('mine');
+ if jsonb_array_length(result->'sanctions')<>1 then raise exception 'QA_SANCTION_HISTORY';end if;
+ perform public.governance('appeal',jsonb_build_object('sanction_id',result->'sanctions'->0->>'id','body','롤백할 QA 이의 제기'));
+ perform set_config('request.jwt.claims',current_setting('qa.v2.owner'),true);
+ target:=public.governance('targets',jsonb_build_object('query',a::text))->0;
+ perform public.governance('release',jsonb_build_object('target_id',a,'revision',target->'sanction_revision','reason','롤백할 QA 제재 해제'));
+ perform set_config('request.jwt.claims',current_setting('qa.v2.a'),true);
+ if not exists(select 1 from jsonb_array_elements(public.schoolpot_v2('notifications')->'items') n where n->>'type'='release') then raise exception 'QA_RELEASE_NOTIFICATION';end if;
+end $$;
+rollback;
+select 'Actual PostgreSQL notification, mention, reply/subscription dedup, ownership, notice, sanction, release and appeal smoke passed; public fixtures rolled back.' result;

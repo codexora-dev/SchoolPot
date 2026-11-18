@@ -54,6 +54,18 @@ export async function rpc(name, payload = {}) {
   if (!navigator.onLine) throw new Error('인터넷 연결을 확인한 뒤 다시 시도해 주세요.');
   const request = client.rpc(name, payload);
   const readOnly =
+    (name === 'schoolpot_v2' &&
+      [
+        'notifications',
+        'unread',
+        'preferences',
+        'post_state',
+        'activity',
+        'mention_search',
+        'member_profile',
+        'push_devices',
+        'delivery_stats',
+      ].includes(payload.p_action)) ||
     ['school_setup', 'board_catalog', 'site_popups'].includes(name) ||
     readActions.has(payload.p_action) ||
     (name === 'manage_notices' && ['list', 'get'].includes(payload.p_action)) ||

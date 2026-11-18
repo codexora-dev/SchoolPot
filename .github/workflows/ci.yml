@@ -17,5 +17,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: https://hlglstdtgcodblynicmh.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_test_fixture_only
+      - run: npm run test:pwa
+      - run: npx --yes deno@2.9.6 check --config supabase/functions/push-dispatch/deno.json supabase/functions/push-dispatch/index.ts
+      - run: npm run test:edge
       - run: npm run build
       - run: npm audit --audit-level=moderate

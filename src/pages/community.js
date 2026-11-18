@@ -1,3 +1,6 @@
+import { mentionPicker, mentionLinks } from '../components/mention-picker.js';
+import { v2 } from '../services/v2.js';
+import { draftKey as keyForDraft, readDraft, saveDraft } from '../lib/drafts.js';
 import { el, link, button, field, empty, toast, date } from '../lib/dom.js';
 import { boards } from '../config/site.js';
 import { pageTitle } from '../components/layout.js';
@@ -177,6 +180,7 @@ export async function postPage(id, state, reload, params) {
   const p = await call('get_post', {
     id,
     comments_offset: Number(params.get('comments_offset')) || 0,
+    comment_id: params.get('comment') || undefined,
   });
   const b = boards.find((b) => b.id === p.board_id) || { name: p.board_name || '게시판' };
   const interactive = p.can_interact !== false;
@@ -196,6 +200,19 @@ export async function postPage(id, state, reload, params) {
       toast(err.message);
     }
   };
+  const commentMentions = mentionPicker();
+  const postState = { bookmarked: Boolean(p.bookmarked), subscribed: Boolean(p.subscribed) };
+  const stateButton = (key, action, labels) => {
+    const control = button(labels[Number(postState[key])], async () => {
+      try {
+        Object.assign(postState, await v2(action, { post_id: id, enabled: !postState[key] }));
+        control.textContent = labels[Number(postState[key])];
+      } catch (error) {
+        toast(error.message);
+      }
+    });
+    return control;
+  };
   const commentForm = el(
     'form',
     {
@@ -205,6 +222,7 @@ export async function postPage(id, state, reload, params) {
         try {
           await call('save_comment', {
             post_id: id,
+            mentions: commentMentions.ids(),
             parent_id: parent || null,
             body: required(new FormData(e.target).get('body'), 1, 2000),
             anonymous: p.anonymous || new FormData(e.target).has('anonymous'),
@@ -216,6 +234,7 @@ export async function postPage(id, state, reload, params) {
       },
     },
     el('h3', {}, '댓글 남기기'),
+    commentMentions.node,
     field('댓글', 'body', 'textarea', {
       required: true,
       maxlength: 2000,
@@ -285,6 +304,7 @@ export async function postPage(id, state, reload, params) {
         el('span', { class: 'meta' }, date(c.created_at)),
       ),
       el('p', { class: 'preserve' }, c.body),
+      mentionLinks(p.mentions?.filter((m) => m.comment_id === c.id)),
       el(
         'div',
         { class: 'comment-actions' },
@@ -341,6 +361,13 @@ export async function postPage(id, state, reload, params) {
     'section',
     { class: 'detail-wrap' },
     link(`← ${b?.name}`, `#/board/${p.board_id}`, 'back-link'),
+    p.notification_comment_deleted
+      ? el(
+          'p',
+          { class: 'panel hint', role: 'status' },
+          '이 알림의 댓글은 삭제되어 더 이상 볼 수 없어요. 남아 있는 게시글과 댓글을 확인할 수 있어요.',
+        )
+      : null,
     el(
       'article',
       { class: 'panel post-detail' },
@@ -357,6 +384,7 @@ export async function postPage(id, state, reload, params) {
         ),
       ),
       el('div', { class: 'post-body preserve' }, p.body),
+      mentionLinks(p.mentions?.filter((m) => !m.comment_id)),
       p.poll
         ? el(
             'section',
@@ -384,6 +412,8 @@ export async function postPage(id, state, reload, params) {
           () => act('like', { kind: 'post', id, liked: !p.liked }),
           'button secondary',
         ),
+        stateButton('bookmarked', 'bookmark', ['저장하기', '저장 취소']),
+        stateButton('subscribed', 'subscribe', ['댓글 구독', '구독 취소']),
         p.is_mine && interactive ? link('수정', `#/write?id=${id}`, 'button secondary') : null,
         p.is_mine
           ? button('삭제', () =>
@@ -448,14 +478,15 @@ export async function writePage(params, state) {
       '운영 중인 게시판을 확인해 주세요.',
       link('게시판 보기', '#/boards', 'button primary'),
     );
-  const draftKey = `schoolpot-draft:${state.user.id}`;
+  const draftKey = keyForDraft(state.user.id, id || '');
   let draft = {};
   try {
-    draft = JSON.parse(localStorage.getItem(draftKey) || '{}');
+    draft = readDraft(localStorage, draftKey);
   } catch {
-    /* malformed local draft */
+    /* Browser storage can be completely unavailable. */
   }
-  const source = p || draft;
+  const source = Object.keys(draft).length ? draft : p || {};
+  const postMentions = mentionPicker(p?.mentions?.filter((m) => !m.comment_id) || []);
   const status = el('p', { role: 'status', class: 'muted' });
   const form = el(
     'form',
@@ -470,6 +501,7 @@ export async function writePage(params, state) {
           const payload = {
             ...data,
             id: id || null,
+            mentions: postMentions.ids(),
             title: required(data.title, 2, 120),
             body: required(data.body, 1, 20000),
             anonymous: form.querySelector('[name=anonymous]').checked,
@@ -534,6 +566,7 @@ export async function writePage(params, state) {
       value: source.title || '',
       placeholder: '어떤 이야기를 나누고 싶나요?',
     }),
+    postMentions.node,
     field('내용', 'body', 'textarea', {
       required: true,
       maxlength: 20000,
@@ -568,13 +601,21 @@ export async function writePage(params, state) {
       button('임시 저장', () => {
         try {
           const data = Object.fromEntries(new FormData(form));
-          localStorage.setItem(
-            draftKey,
-            JSON.stringify({ ...data, anonymous: form.querySelector('[name=anonymous]').checked }),
-          );
+          saveDraft(localStorage, draftKey, {
+            ...data,
+            anonymous: form.querySelector('[name=anonymous]').checked,
+          });
           status.textContent = '이 기기에 임시 저장했어요. 공용 기기에서는 로그아웃해 주세요.';
         } catch {
           status.textContent = '이 기기에서는 임시 저장을 사용할 수 없어요.';
+        }
+      }),
+      button('임시 저장 삭제', () => {
+        try {
+          localStorage.removeItem(draftKey);
+          status.textContent = '이 기기의 임시 저장 내용을 삭제했어요.';
+        } catch {
+          status.textContent = '저장 공간에 접근하지 못했어요.';
         }
       }),
       el('button', { type: 'submit', class: 'button primary' }, id ? '수정 완료' : '게시하기'),
@@ -585,6 +626,21 @@ export async function writePage(params, state) {
   form.querySelector('[name=options]').value = Array.isArray(source.options)
     ? source.options.join('\n')
     : source.options || p?.poll?.options?.map((option) => option.label).join('\n') || '';
+  if (draft.saved_at) status.textContent = '이 기기에 임시 저장한 내용을 복원했어요.';
+  form.addEventListener('input', () => {
+    try {
+      const data = Object.fromEntries(new FormData(form));
+      delete data.mention_query;
+      saveDraft(localStorage, draftKey, {
+        ...data,
+        anonymous: form.querySelector('[name=anonymous]').checked,
+      });
+      status.textContent = '이 기기에 자동 저장했어요. 24시간 뒤 만료되며 로그아웃하면 삭제됩니다.';
+    } catch {
+      status.textContent =
+        '자동 저장을 사용할 수 없어요. 페이지를 떠나기 전에 내용을 보관해 주세요.';
+    }
+  });
   const boardSelect = form.querySelector('[name=board]');
   const updateBoardFields = () => {
     const options = form.querySelector('[name=options]');

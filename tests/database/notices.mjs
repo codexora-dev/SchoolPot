@@ -6,13 +6,13 @@ export async function noticeTests({ db, as, call, ok, denied, users }) {
     select $1,'목록 검증 '||lpad(i::text,2,'0'),'<strong>본문 비공개 목록</strong>','html',now()-i*interval '1 minute' from generate_series(1,26)i`,
     [users.admin],
   );
-  await ok('공지 목록은 제목·날짜만 제공하고 검색·페이지를 일관되게 나눈다', async () => {
+  await ok('공지 목록은 제목·날짜·중요도만 제공하고 검색·페이지를 일관되게 나눈다', async () => {
     await as('a');
     const first = await call('notice_list', { query: '목록 검증' });
     const next = await call('notice_list', { query: '목록 검증', offset: 20 });
     assert.equal(first.length, 20);
     assert.equal(next.length, 6);
-    assert.deepEqual(Object.keys(first[0]).sort(), ['created_at', 'id', 'title']);
+    assert.deepEqual(Object.keys(first[0]).sort(), ['created_at', 'id', 'owner_only', 'title']);
     assert.equal(first[0].title, '목록 검증 01');
     assert.equal(next[0].title, '목록 검증 21');
     assert.equal(new Set([...first, ...next].map((n) => n.id)).size, 26);

@@ -77,6 +77,15 @@ export function profilePage(state, refresh, params = new URLSearchParams()) {
       '나에게 맞는 학교생활을 만들어가요.',
     ),
     !accountOnly ? form : null,
+    !accountOnly
+      ? el(
+          'div',
+          { class: 'panel actions' },
+          link('내 활동 · 저장한 글', '#/activity', 'button secondary'),
+          link('알림 설정', '#/notification-settings', 'button secondary'),
+          link('앱 설치 안내', '#/app-install', 'button secondary'),
+        )
+      : null,
     el(
       'div',
       { class: 'panel danger-zone' },

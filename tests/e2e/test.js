@@ -6,6 +6,9 @@ export const test = base.extend({
   page: async ({ page }, use) => {
     await page.route('**/rest/v1/rpc/site_popups', (route) => route.fulfill({ json: [] }));
     if (process.env.SCHOOLPOT_LIVE_TEST !== '1') {
+      await page.route('**/rest/v1/rpc/schoolpot_v2', (route) =>
+        route.fulfill({ json: { unread: 0, version: 0, items: [] } }),
+      );
       await page.route('**/rest/v1/rpc/service_configuration', (route) =>
         route.fulfill({
           status: 400,

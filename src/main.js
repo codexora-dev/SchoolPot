@@ -1,4 +1,8 @@
 import './styles/main.css';
+import { registerPwa } from './services/pwa.js';
+import { clearDrafts } from './lib/drafts.js';
+import { detachLocalPush } from './services/push.js';
+import { setNotificationAccount, syncUnread, startNotificationSync } from './services/v2.js';
 import { roleOf } from './services/governance.js';
 import { el, link, empty, errorBox, toast } from './lib/dom.js';
 import { client, configured, authStorage } from './services/api.js';
@@ -19,7 +23,14 @@ const boardPage = (...args) => import('./pages/community.js').then((m) => m.boar
 const postPage = (...args) => import('./pages/community.js').then((m) => m.postPage(...args));
 const writePage = (...args) => import('./pages/community.js').then((m) => m.writePage(...args));
 const notificationsPage = (...args) =>
-  import('./pages/school.js').then((m) => m.notificationsPage(...args));
+  import('./pages/notifications.js').then((m) => m.notificationsPage(...args));
+const notificationSettingsPage = (...args) =>
+  import('./pages/notification-settings.js').then((m) => m.notificationSettingsPage(...args));
+const activityPage = (...args) =>
+  import('./pages/activity.js').then((m) => m.activityPage(...args));
+const memberProfilePage = (...args) =>
+  import('./pages/activity.js').then((m) => m.memberProfilePage(...args));
+const appInstallPage = () => import('./pages/app-install.js').then((m) => m.appInstallPage());
 const noticesPage = (...args) => import('./pages/notices.js').then((m) => m.noticesPage(...args));
 const noticePage = (...args) => import('./pages/notices.js').then((m) => m.noticePage(...args));
 const rulesPage = (...args) => import('./pages/rules.js').then((m) => m.rulesPage(...args));
@@ -86,6 +97,7 @@ async function refresh() {
   if (version !== sessionVersion) return;
   setBoards(catalog);
   state.boardError = boardError;
+  if (!authError && state.user?.id && state.user.id !== user?.id) clearDrafts(state.user.id);
   Object.assign(state, { user, me, authError });
   if (me?.role && !me.restricted) {
     const { rpc } = await import('./services/api.js');
@@ -100,13 +112,14 @@ async function refresh() {
 async function logout() {
   if (client) {
     const id = state.user?.id;
+    await detachLocalPush().catch(() => {});
     const { error } = await client.auth.signOut();
     if (error) {
       toast('로그아웃에 실패했어요. 다시 시도해 주세요.');
       return;
     }
     try {
-      if (id) localStorage.removeItem(`schoolpot-draft:${id}`);
+      if (id) clearDrafts(id);
     } catch {
       /* Session still signs out when storage is blocked. */
     }
@@ -153,6 +166,7 @@ function gate() {
 }
 async function render() {
   const current = ++renderId;
+  setNotificationAccount(state);
   const [route = '/', search = ''] = (location.hash.slice(1) || '/').split('?');
   const params = new URLSearchParams(search);
   if (state.me?.restricted) {
@@ -205,12 +219,14 @@ async function render() {
       '/rules',
       '/boards',
       '/privacy',
+      '/app-install',
     ];
     if (route === '/') page = await homePage(state, render);
     else if (['/login', '/signup', '/reset', '/password'].includes(route)) {
       if (route === '/password' && !state.user) page = gate();
       else page = await authPage(route.slice(1), refresh);
-    } else if (route === '/privacy') page = await privacyPage();
+    } else if (route === '/app-install') page = await appInstallPage();
+    else if (route === '/privacy') page = await privacyPage();
     else if (route === '/enrollment' && state.user)
       page = await enrollmentPage(state, async () => {
         await refresh();
@@ -300,7 +316,10 @@ async function render() {
         },
         logout,
       );
-    } else if (route === '/notifications') page = await notificationsPage(render);
+    } else if (route === '/notifications') page = await notificationsPage(params, render);
+    else if (route === '/notification-settings') page = await notificationSettingsPage(render);
+    else if (route === '/activity') page = await activityPage(params);
+    else if (route.startsWith('/member/')) page = await memberProfilePage(route.split('/')[2]);
     else if (route === '/notices') page = await noticesPage(params);
     else if (route.startsWith('/notice/'))
       page = await noticePage(route.split('/')[2], params, state, render);
@@ -319,6 +338,8 @@ async function render() {
       );
     if (current === renderId) {
       main.replaceChildren(page);
+      setNotificationAccount(state);
+      void syncUnread();
       document.title = `${page.querySelector('h1,h2')?.textContent || '우리 학교의 작은 광장'} · 스쿨팟`;
       void showSitePopups();
     }
@@ -376,6 +397,11 @@ if (client)
     }
   });
 connectionStatus();
+void registerPwa();
+startNotificationSync();
+window.addEventListener('schoolpot-notifications-change', () => {
+  if (location.hash.split('?')[0] === '#/notifications') void render();
+});
 const initial = layout(state, toggleTheme, logout);
 initial.main.append(
   el(

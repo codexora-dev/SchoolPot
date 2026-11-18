@@ -70,6 +70,7 @@ export function layout(state, onTheme, onLogout) {
     el(
       'div',
       { class: 'sidebar-bottom' },
+      link('앱 설치 안내', '#/app-install'),
       link('커뮤니티 이용 안내', '#/guide'),
       link('커뮤니티 이용 규정', '#/rules'),
       link('개인정보 처리방침', '#/privacy'),
@@ -159,6 +160,8 @@ export function layout(state, onTheme, onLogout) {
             el('strong', {}, nickname),
             el('small', {}, schoolName + ' · 나의 스쿨팟'),
           ),
+          link('내 활동 · 구독 · 저장', '#/activity', 'account-item'),
+          link('알림 설정', '#/notification-settings', 'account-item'),
           link('프로필 설정', '#/profile', 'account-item'),
           link('학년·반 선택', '#/enrollment', 'account-item'),
           link('계정 관리 · 회원탈퇴', '#/profile?section=account', 'account-item'),

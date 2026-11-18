@@ -433,3 +433,6 @@ verify_jwt = false
 
 [functions.accounts]
 verify_jwt = false
+
+[functions.push-dispatch]
+verify_jwt = false

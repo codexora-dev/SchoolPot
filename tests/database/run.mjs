@@ -1,3 +1,5 @@
+import { vaultTests } from './vault.mjs';
+import { v2Tests } from './v2.mjs';
 import { roleMigrationTests } from './role-migration.mjs';
 import { governanceTests } from './governance.mjs';
 import { PGlite } from '@electric-sql/pglite';
@@ -121,6 +123,123 @@ await db.exec(
     'utf8',
   ),
 );
+const upgradeUser = '99000000-0000-4000-8000-000000000001';
+const upgradePost = '99000000-0000-4000-8000-000000000002';
+const upgradeNotice = '99000000-0000-4000-8000-000000000003';
+await db.query(
+  'insert into auth.users(id,email,raw_app_meta_data) values($1,\'v2_upgrade@accounts.schoolpot.invalid\',\'{"account_type":"username"}\')',
+  [upgradeUser],
+);
+await db.query(
+  "insert into private.posts(id,author_id,board_id,title,body,anonymous) values($1,$2,'anonymous','보존 확인 원본','기존 본문',true)",
+  [upgradePost, upgradeUser],
+);
+await db.query(
+  "insert into private.notices(id,author_id,title,body) values($1,$2,'보존 확인 공지','기존 공지 본문')",
+  [upgradeNotice, upgradeUser],
+);
+await db.query(
+  "insert into private.notifications(user_id,post_id,message,read_at) values($1,$2,'기존 읽은 알림',now()-interval '1 hour')",
+  [upgradeUser, upgradePost],
+);
+const upgradeBefore = (
+  await db.query('select message,read_at,created_at from private.notifications where user_id=$1', [
+    upgradeUser,
+  ])
+).rows[0];
+const baselineFunctions = await db.query(
+  "select p.proname,md5(p.prosrc) hash from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='private' and p.proname in ('community','community_legacy','governance','manage_notices')",
+);
+console.log('V1_BASELINE_HASHES', JSON.stringify(baselineFunctions.rows));
+const v2Migration = await readFile(
+  new URL('../../supabase/migrations/20261118134623_schoolpot_v2.sql', import.meta.url),
+  'utf8',
+);
+await ok('V2 적용 전 관리자 목록이 지정안과 다르면 DDL 실행 전에 중단', async () => {
+  await db.query("insert into private.user_roles(user_id,role) values($1,'moderator')", [
+    upgradeUser,
+  ]);
+  await assert.rejects(() => db.exec(v2Migration), /UNREVIEWED_ADMIN/);
+  assert.equal(
+    (await db.query("select to_regclass('private.notification_preferences') name")).rows[0].name,
+    null,
+  );
+  await db.query('delete from private.user_roles where user_id=$1', [upgradeUser]);
+});
+await db.exec(v2Migration);
+await db.exec(
+  await readFile(
+    new URL(
+      '../../supabase/migrations/20261118145000_push_vault_configuration.sql',
+      import.meta.url,
+    ),
+    'utf8',
+  ),
+);
+await vaultTests({ db, as, ok, denied });
+await db.exec(
+  await readFile(
+    new URL('../../supabase/migrations/20261118150550_signed_push_scheduler.sql', import.meta.url),
+    'utf8',
+  ),
+);
+await ok(
+  '서명 스케줄러 nonce는 서버 전용이며 한 번만 사용하고 직접 서명 함수는 공개하지 않는다',
+  async () => {
+    const nonce = '99000000-0000-4000-8000-000000000099';
+    await as('a');
+    await denied(
+      () => db.query('select public.push_scheduler_claim($1)', [nonce]),
+      /permission denied/,
+    );
+    await denied(() => db.query('select private.invoke_push_scheduler()'), /permission denied/);
+    await as('', 'service_role');
+    for (let i = 0; i < 2; i++)
+      assert.deepEqual(
+        (await db.query('select public.push_scheduler_claim($1) result', [nonce])).rows[0].result,
+        [],
+      );
+    await db.exec('reset role');
+    assert.equal(
+      (
+        await db.query('select count(*) n from private.push_scheduler_nonces where nonce=$1', [
+          nonce,
+        ])
+      ).rows[0].n,
+      1,
+    );
+  },
+);
+await ok('V1 기존 게시글·공지·읽은 알림·시각·계정을 보존하는 V2 마이그레이션', async () => {
+  assert.deepEqual(
+    (
+      await db.query(
+        'select message,read_at,created_at from private.notifications where user_id=$1',
+        [upgradeUser],
+      )
+    ).rows[0],
+    upgradeBefore,
+  );
+  assert.equal(
+    (await db.query('select body from private.posts where id=$1', [upgradePost])).rows[0].body,
+    '기존 본문',
+  );
+  assert.equal(
+    (await db.query('select body from private.notices where id=$1', [upgradeNotice])).rows[0].body,
+    '기존 공지 본문',
+  );
+  assert.equal(
+    (
+      await db.query('select count(*) n from private.account_handles where user_id=$1', [
+        upgradeUser,
+      ])
+    ).rows[0].n,
+    1,
+  );
+});
+await db.query('delete from private.notices where id=$1', [upgradeNotice]);
+await db.query('delete from auth.users where id=$1', [upgradeUser]);
+
 // Every regression case uses the final schema; these settings are fixtures only.
 await db.exec(
   "update private.class_settings set counts=array[2,3,1];update private.privacy_policy set is_ready=true,overseas_notice='Test fixture only; never publish as an operating policy.'",
@@ -902,6 +1021,7 @@ await formattedTests({ db, as, call, ok, denied });
 await noticeManagementTests({ db, as, call, ok, denied, users });
 await noticeTests({ db, as, call, ok, denied, users });
 await governanceTests({ db, as, call, ok, denied, users });
+await v2Tests({ db, as, call, ok, denied, users });
 await db.exec('reset role');
 await db.exec(
   "delete from private.memberships;update private.class_settings set counts=array[0,0,0],revision=1;update private.privacy_policy set is_ready=false,overseas_notice=''",

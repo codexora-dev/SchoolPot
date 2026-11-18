@@ -30,6 +30,18 @@ async function verify() {
       throw new Error('Invalid CSS content type');
     await result.arrayBuffer();
   }
+  const manifestResponse = await fetch(new URL('manifest.webmanifest', url), {
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!manifestResponse.ok) throw new Error('Manifest unavailable');
+  const manifest = await manifestResponse.json();
+  if (manifest.name !== 'SchoolPot' || manifest.display !== 'standalone')
+    throw new Error('Invalid PWA manifest');
+  for (const name of ['sw.js', 'offline.html', ...manifest.icons.map((icon) => icon.src)]) {
+    const result = await fetch(new URL(name, url), { signal: AbortSignal.timeout(15000) });
+    if (!result.ok) throw new Error(`PWA resource unavailable: ${name}`);
+    await result.arrayBuffer();
+  }
   console.log(`Verified published HTML and ${assets.length} assets at ${url.href}`);
 }
 for (let attempt = 1; attempt <= attempts; attempt++) {

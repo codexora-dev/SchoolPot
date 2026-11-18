@@ -1,3 +1,4 @@
+import { deliveryManager } from './admin-notifications.js';
 import { el, button, link, toast, empty, date } from '../lib/dom.js';
 import { pageTitle } from '../components/layout.js';
 import { call } from '../services/community.js';
@@ -19,6 +20,7 @@ export async function adminPage(params, reload, state = {}) {
   const owner = roleOf(state.me) === 'owner';
   const menus = owner
     ? {
+        notifications: '알림 전송 현황',
         overview: '운영 현황',
         reports: '신고 관리',
         members: '회원·제재 관리',
@@ -76,6 +78,7 @@ export async function adminPage(params, reload, state = {}) {
         link('우리 반 수행평가 관리', '#/assessments', 'button primary'),
       ),
     );
+  if (tab === 'notifications') main.append(await deliveryManager());
   if (tab === 'security') main.append(await securityPanel());
   if (tab === 'settings' || tab === 'rules') {
     const { configurationManager } = await import('./admin-settings.js');
@@ -159,6 +162,16 @@ export async function adminPage(params, reload, state = {}) {
                 el(
                   'div',
                   { class: 'actions' },
+                  r.kind === 'content' && r.status === 'pending'
+                    ? button('검토 시작', () =>
+                        action('admin_resolve', {
+                          id: r.id,
+                          kind: r.kind,
+                          status: 'reviewing',
+                          revision: r.revision,
+                        }),
+                      )
+                    : null,
                   button('처리 완료', () =>
                     action('admin_resolve', {
                       id: r.id,

@@ -39,6 +39,7 @@ export async function formattedTests({ db, as, call, ok, denied }) {
         title: '서식 ' + format,
         body: '**본문** <b>안내</b>',
         content_format: format,
+        notify_members: false,
       });
       const item = (await call('notices')).find((n) => n.id === saved.id);
       assert.equal(item.content_format, format);
@@ -51,6 +52,7 @@ export async function formattedTests({ db, as, call, ok, denied }) {
     );
     const saved = await call('admin_notice', {
       title: '기존 입력 호환',
+      notify_members: false,
       body: '<b>문자 그대로</b>',
     });
     assert.equal((await call('notices')).find((n) => n.id === saved.id).content_format, 'text');

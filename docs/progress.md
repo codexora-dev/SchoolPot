@@ -206,3 +206,23 @@ live E2E 첫 시도는 문의 제출 뒤 details가 다시 닫혀 응답이 가�
 최종 공개 빌드에서 기존 account-live 테스트도 실행해 실제 가입, 자동로그인 선택·해제의 새 브라우저 차이, 잘못된 탈퇴 비밀번호 거절, 정상 탈퇴 및 재로그인 차단을 통과했다. 앞서 실제 제한 계정 live 테스트도 이의 제기·권리 문의·탈퇴·기존 JWT 거절을 통과했다. 사용한 임시 계정 네 개는 모두 삭제했고 저장소에 실제 키·비밀번호·세션을 커밋하지 않았다. 테스트 상태 파일은 tests/.local에 한정해 Git에서 제외한다.
 
 최종 점검 도중 기존 제한 1건이 운영 중 최고 관리자의 이의 제기 답변 및 해제 작업으로 변경됐음을 감사 시각(한국 시각 23:43)과 owner 역할로 확인했다. 이는 QA 롤백 검사 이후의 실제 운영 변경이며 되돌리지 않았다. 같은 시점의 실제 이의 제기 알림도 보존했다. 최초 migration 시점의 건수 보존 검증과 배포 이후 이용자/관리자 작업을 구분한다. 공개 배포 주소는 https://codexora-dev.github.io/SchoolPot/ 이다.
+
+## 2026-11-18 — SchoolPot V2 로컬 구현과 검증 (운영 미적용)
+
+- 착수 전 git 작업 트리는 깨끗했다. Vite/ES Modules/직접 DOM과 기존 private+RLS+invoker/definer, 아이디·실제 세션·학교 소속·owner/moderator 검사를 분석했다.
+- 원격은 읽기만 수행했다. SchoolPot 프로젝트의 private 테이블 35개 RLS와 지정 역할 2명을 확인했다. 기존 migration의 로컬/원격 timestamp 차이를 재확인했다. 운영 DDL·역할 변경·배포·서비스 데이터 변경은 수행하지 않았다.
+- PWA manifest/기존 모자 로고 PNG/설치 안내/SW/빌드 hash 업데이트/2세대 정적 캐시/오프라인 화면을 구현했다. Auth/API/개인정보/관리 응답은 캐시하지 않는다.
+- 기존 notifications를 보존하는 V2 migration을 추가했다. 댓글·답글·멘션·공지·신고·구독·제재 만료 이벤트, recipient/event unique, 알림 센터·서버 미읽음·설정·30초 표시 탭 동기화·기기별 푸시 관리, 글 구독/북마크/내 활동을 구현했다.
+- 멘션은 검색 노출 기본 꺼짐, 선택된 실제 ID 검증·5명/20회 한도다. 익명 author ID를 API에 추가하지 않았다. 신고 처리 결과에 내부 관리자 사유를 보내지 않는다.
+- push-dispatch는 서버 비밀 토큰 인증, 허용 HTTPS 공급자 검사/redirect 거절, 실제 Web Push 암호화, outbox/lease/전송 로그/방해 금지/묶음/제한적 재시도/만료 기기 정리를 구현했다. VAPID 키 및 발송 설정·실제 푸시 전송은 실행하지 않았다.
+- 기존 제재/이의 제기 권한을 유지하고 서버 상태·만료 통지·제재별 신청 3회 한도를 추가했다. 공지 중요도·알림 선택·시간당 3회 신규 발송 등록을 적용했다. 단순 수정은 알림을 다시 보내지 않는다.
+- 자동 초안은 계정/수정 글별 24시간 만료와 게시/로그아웃/탈퇴 정리, 저장소 차단 처리를 추가했다.
+- 실패와 수정: SQL record alias 충돌 수정, 기존 숨김 글 접근 회귀 수정, 최신 governance의 v_role/appeal_admin 유지, 알림 API 변경 fixture 조정, PWA 업데이트 navigation race 수정. 최종 기능 테스트는 통과했다.
+- 최종 결과: lint 통과, 단위 30, PGlite 118, 브라우저 74(실서비스 3 skipped), 프로덕션 PWA 3, Deno 20, Deno check/build/diff check 통과. PWA 검증 후 실제 로컬 환경으로 다시 빌드했다. 실제 Hosted Auth/PostgREST/Edge/OS 푸시 검증과 구분한다.
+- 의존성 감사: production npm audit 0건, Edge lock audit 0건. 전체 npm audit는 기존 picomatch ReDoS GHSA-fc5q-39xc-vjpf에 따른 개발 의존성 high 5건으로 실패했다. 공식 권고와 npm registry 확인 시 패치 릴리스가 없다. 강제 다운그레이드·감사 예외·검사 생략으로 숨기지 않았으며 CI/배포 준비 완료를 주장하지 않는다.
+- 원격 advisers: RLS/no-policy INFO는 기존 deny-all RPC 설계이며, 기존 유출 비밀번호 보호 비활성 WARN을 기록했다. 운영 인증 설정은 변경하지 않았다.
+- README/CHANGELOG/V2_IMPLEMENTATION/PWA_GUIDE/NOTIFICATION_SYSTEM/DEPLOYMENT 문서를 한국어로 정리했다. 기존 deployment.md는 요청된 대문자 DEPLOYMENT.md로 이름을 맞췄다.
+- 사용자가 요청한 업데이트 공지와 공개 설치·알림 안내 팝업을 docs/releases에 준비했다. scripts/publish-v2.mjs는 기본 dry-run이고 실제 V2 배포 SHA·현재 owner 세션·역할 목록·V2 API 검증 후 관리 RPC로 게시한다. 기존 동일 제목은 덮어쓰거나 재발송하지 않는다. 운영 게시 모드는 실행하지 않았다.
+- 남은 작업: 공식 보안 패치/검증된 대응 후 전체 감사 통과, 사전 승인, 운영 migration·Edge·Pages 적용, 서버 VAPID/토큰/주기 실행 설정, 실기기/실서버 회귀 검증, 실제 업데이트 공지·팝업 게시. 법적 운영 완료·즉시 완전 데이터 삭제·실제 연령/재학생 인증을 주장하지 않는다.
+
+- 최종 추가 확인: 제한 계정 전환 시 일반 알림 폴링을 중단하며, 본인 운영 문의/요청의 자기 알림은 생략하되 비활성 수신 설정에서도 필수 제재 통지는 기록한다. 삭제된 알림 댓글의 직접 이동에는 서버 존재 확인과 삭제 안내를 추가했다. 관련 PostgreSQL/단위/브라우저 검증을 수행했다.

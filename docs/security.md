@@ -57,3 +57,11 @@ board_catalog는 기존 공개 메뉴와 같은 운영 중 게시판 메타데�
 feedback API의 작성자 값은 auth.uid()로만 정합니다. 본인 목록은 author_id 조건으로 강제하며, 관리자 목록·답변은 현재 DB 역할과 감사 기록을 요구합니다. 본문·답변은 textContent로 렌더링하고 직접 테이블 권한은 거절합니다. 요청의 소유자·상태·답변 위조, 타인 문의 ID 조회, 세션 삭제 후 JWT 재사용, 동시 수정 덮어쓰기 등을 DB 테스트와 실제 API로 검증했습니다.
 
 [유출 비밀번호 보호 설정](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) 비활성 WARN 1건도 확인했습니다. 팝업과 별개인 Auth 설정이며, 공식 문서상 Pro 이상 기능이므로 임의의 유료 플랜 변경은 하지 않았습니다.
+
+## 2026-11-18 V2 점검
+
+새 데이터는 private/RLS/직접 권한 회수와 현재 계정·세션·소속·제한·DB 역할 검사로 관리합니다. 푸시 발송 RPC는 service_role만 호출하며 스케줄러 Edge는 별도 비밀 인증과 SSRF 제한을 사용합니다. 다른 회원의 알림·설정·기기·북마크를 변경하지 못하도록 PGlite에서 실제 권한을 실행했습니다. 신고 결과의 내부 사유, 익명 작성자 ID, 푸시 endpoint/키, 잠금 화면의 민감 본문을 응답에서 제외했습니다.
+
+개발 의존성 picomatch 4.0.7에 [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf)가 남아 전체 npm audit는 high 5건으로 실패합니다. 공식 패치 미공개 상태이며 Vite/Vitest 연쇄 항목을 포함한 수치입니다. production 의존성 감사는 0건, Edge Deno lock 감사도 알려진 취약점이 없습니다. CI의 전체 감사 차단은 유지하며 경고 예외로 우회하지 않았습니다.
+
+원격 기존 Auth에 [유출 비밀번호 보호 비활성](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) 경고가 있습니다. 이 운영 설정은 별도 확인 대상입니다. 자세한 결과·제한은 V2_IMPLEMENTATION.md를 참고하세요.

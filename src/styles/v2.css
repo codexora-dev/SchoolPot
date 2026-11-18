@@ -1,0 +1,72 @@
+.notification-link {
+  position: relative;
+}
+.notification-count {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  min-width: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--green);
+  color: var(--surface);
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+}
+.pwa-update {
+  position: fixed;
+  z-index: 150;
+  bottom: 90px;
+  right: 20px;
+  width: min(360px, calc(100vw - 32px));
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-menu);
+}
+.pwa-update p {
+  color: var(--muted);
+}
+.mention-picker {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.mention-picker summary {
+  cursor: pointer;
+  color: var(--green);
+}
+.mention-links {
+  margin-block: 8px;
+}
+.notification .actions {
+  flex-wrap: wrap;
+}
+.notification-list .notification {
+  align-items: start;
+  gap: 12px;
+}
+.notification > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.notification > div .meta {
+  display: block;
+}
+.notification .board-chip {
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .notification-list .notification {
+    flex-wrap: wrap;
+  }
+  .notification .actions {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pwa-update {
+    animation: none;
+  }
+}

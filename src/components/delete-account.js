@@ -1,3 +1,5 @@
+import { clearDrafts } from '../lib/drafts.js';
+import { detachLocalPush } from '../services/push.js';
 import { el, field, button, toast } from '../lib/dom.js';
 import { client, edge, authStorage } from '../services/api.js';
 export function deleteAccountDialog(state, refresh) {
@@ -37,7 +39,8 @@ export function deleteAccountDialog(state, refresh) {
         }
         form.querySelector('[name=current-password]').value = '';
         try {
-          if (state.user?.id) localStorage.removeItem(`schoolpot-draft:${state.user.id}`);
+          if (state.user?.id) clearDrafts(state.user.id);
+          await detachLocalPush();
         } catch {
           /* Cleanup cannot undo deletion. */
         }

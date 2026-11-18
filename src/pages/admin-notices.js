@@ -38,6 +38,7 @@ export async function editNotice(id, onSaved, owner = true) {
             title: required(data.title, 2, 120),
             body: required(data.body, 1, 20000),
             content_format: data.content_format,
+            notify_members: editing ? undefined : data.notify_members === 'on',
             owner_only: owner ? data.owner_only === 'on' : undefined,
           });
           dialog.close();
@@ -68,6 +69,14 @@ export async function editNotice(id, onSaved, owner = true) {
           { class: 'checkbox-field' },
           el('input', { type: 'checkbox', name: 'owner_only', checked: item.owner_only }),
           '최고 관리자 전용 중요 공지',
+        )
+      : null,
+    !editing
+      ? el(
+          'label',
+          { class: 'checkbox-field' },
+          el('input', { type: 'checkbox', name: 'notify_members', checked: true }),
+          '이 공지의 새 알림 보내기',
         )
       : null,
     contentEditor({ body: item.body || '', format: item.content_format || 'text' }),
@@ -198,6 +207,11 @@ export async function noticeManager(params, reload, owner = true) {
                 el('small', { class: 'meta' }, `등록 ${date(item.created_at)}`),
               ),
               el('h3', {}, item.title),
+              el(
+                'p',
+                { class: 'hint' },
+                `${item.owner_only ? '중요 공지' : '일반 공지'} · ${item.notify_members === false ? '새 알림 없이 등록' : '등록 시 새 알림 사용'}`,
+              ),
               item.updated_at && item.updated_at !== item.created_at
                 ? el('p', { class: 'hint' }, `수정 ${date(item.updated_at)}`)
                 : null,

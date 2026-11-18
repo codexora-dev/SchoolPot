@@ -1,3 +1,4 @@
+import { pwaPlugin } from './scripts/pwa-plugin.js';
 import { defineConfig, loadEnv } from 'vite';
 import { safePublicKey } from './src/lib/validation.js';
 export default defineConfig(({ mode }) => {
@@ -13,11 +14,17 @@ export default defineConfig(({ mode }) => {
   return {
     base: env.VITE_BASE_PATH || './',
     plugins: [
+      pwaPlugin(),
       {
         name: 'production-csp',
         apply: 'build',
         transformIndexHtml() {
           return [
+            {
+              tag: 'meta',
+              attrs: { name: 'schoolpot-version', content: '2.0.0' },
+              injectTo: 'head',
+            },
             {
               tag: 'meta',
               attrs: { name: 'schoolpot-build', content: process.env.GITHUB_SHA || 'local' },

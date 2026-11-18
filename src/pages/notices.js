@@ -62,7 +62,7 @@ export async function noticesPage(params) {
                 href: `#/notice/${n.id}${context.size ? '?' + context : ''}`,
                 class: 'panel notice-list-item',
               },
-              el('span', { class: 'board-chip' }, '공지'),
+              el('span', { class: 'board-chip' }, n.owner_only ? '중요 공지' : '공지'),
               el(
                 'div',
                 {},
@@ -120,7 +120,7 @@ export async function noticePage(id, params, state, reload) {
     el(
       'article',
       { class: 'panel notice notice-detail' },
-      el('span', { class: 'board-chip' }, '공지사항'),
+      el('span', { class: 'board-chip' }, notice.owner_only ? '중요 공지사항' : '공지사항'),
       el('h1', {}, notice.title),
       el('time', { datetime: notice.created_at, class: 'meta' }, date(notice.created_at)),
       notice.updated_at && notice.updated_at !== notice.created_at

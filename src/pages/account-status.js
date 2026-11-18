@@ -35,6 +35,18 @@ export async function accountStatus(state, reload, logout, blocked = false) {
             permanent: '영구 이용 제한',
           }[s.kind],
         ),
+        s.state
+          ? el(
+              'p',
+              { class: 'hint' },
+              {
+                active: '현재 적용 중',
+                released: '관리자 해제 완료',
+                expired: '이용 제한 기간 만료',
+                nonblocking: '비차단 운영 안내',
+              }[s.state],
+            )
+          : null,
         el('h2', {}, s.rule),
         el('p', { class: 'preserve' }, s.reason),
         el(
@@ -43,7 +55,16 @@ export async function accountStatus(state, reload, logout, blocked = false) {
           `시작: ${date(s.starts_at)}${s.ends_at ? ` · 종료: ${date(s.ends_at)}` : s.kind === 'permanent' ? ' · 최고 관리자 해제 시까지' : ''}${s.revoked_at ? ' · 해제됨' : ''}`,
         ),
       );
-      if (!appeal) {
+      const appealLimitReached = records.appeals.filter((a) => a.sanction_id === s.id).length >= 3;
+      if (appealLimitReached && !appeal)
+        card.append(
+          el(
+            'p',
+            { class: 'hint' },
+            '이 제재의 이의 제기 3회를 모두 사용했어요. 추가 문의는 아래 계정 문의로 접수해 주세요.',
+          ),
+        );
+      if (!appeal && !appealLimitReached && s.can_appeal !== false) {
         const target = el('div');
         card.append(
           button('이의 제기', () => {

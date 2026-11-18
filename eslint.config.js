@@ -4,6 +4,7 @@ export default [
     ignores: [
       'dist/**',
       'node_modules/**',
+      'vendor/picomatch/**',
       'supabase/functions/**',
       'playwright-report/**',
       'test-results/**',

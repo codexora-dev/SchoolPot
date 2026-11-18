@@ -1,77 +1,8 @@
-import { el, field, button, link, empty, date, toast, localDate } from '../lib/dom.js';
+import { el, field, button, link, empty, toast, localDate } from '../lib/dom.js';
 import { pageTitle } from '../components/layout.js';
 import { call } from '../services/community.js';
 import { edge } from '../services/api.js';
 import { reportDialog } from './community.js';
-export async function notificationsPage(reload) {
-  const items = await call('notifications');
-  return el(
-    'section',
-    {},
-    pageTitle(
-      'STAY CONNECTED',
-      '내 알림',
-      '나에게 도착한 새로운 소식',
-      button('모두 읽음', async () => {
-        try {
-          await call('read_notifications');
-          await reload();
-        } catch (err) {
-          toast(err.message);
-        }
-      }),
-    ),
-    el(
-      'div',
-      { class: 'panel notification-list' },
-      items.length
-        ? items.map((n) =>
-            el(
-              'article',
-              { class: `notification ${n.read_at ? 'read' : ''}` },
-              el('span', { class: 'notification-dot' }),
-              el(
-                'div',
-                {},
-                n.governance_kind
-                  ? link(
-                      n.message,
-                      {
-                        request: '#/admin?tab=requests',
-                        role: '#/profile',
-                        rights: '#/admin?tab=feedback',
-                        appeal: '#/account-status',
-                        appeal_admin: '#/admin?tab=appeals',
-                        sanction: '#/account-status',
-                      }[n.governance_kind] || '#/account-status',
-                    )
-                  : n.feedback_id
-                    ? link(n.message, '#/feedback')
-                    : n.post_id
-                      ? link(n.message, `#/post/${n.post_id}`)
-                      : link(n.message, '#/notices'),
-                el('small', { class: 'meta' }, date(n.created_at)),
-              ),
-              !n.read_at
-                ? button(
-                    '읽음',
-                    async () => {
-                      try {
-                        await call('read_notifications', { id: n.id });
-                        await reload();
-                      } catch (err) {
-                        toast(err.message);
-                      }
-                    },
-                    'text-button',
-                  )
-                : null,
-            ),
-          )
-        : empty('아직 도착한 알림이 없어요', '새 댓글과 학교 소식을 여기서 확인할 수 있어요.'),
-    ),
-  );
-}
 export async function neisPage(kind, params) {
   const day = params.get('day') || localDate();
   const title = kind === 'meals' ? '오늘의 급식' : '학사일정';

@@ -1,8 +1,21 @@
-# 스쿨팟 · 안남중학교
+# 스쿨팟 V2 · 안남중학교
 
 창원 안남중학교 학생들이 학교생활과 이야기를 나누는 모바일 커뮤니티입니다. Vite + HTML/CSS/JavaScript ES Modules + Supabase를 사용합니다.
 
 현재 아이디 계정용 DB 마이그레이션과 accounts/neis/delete-account Edge Function이 실제 Supabase 프로젝트에 적용되어 있습니다. 실제 가입·로그인·글·댓글·투표·알림·수행평가·급식·복구·탈퇴까지 검증했습니다. 공개 사이트는 https://codexora-dev.github.io/SchoolPot/ 입니다. main의 프론트엔드 변경은 검사 후 자동 배포합니다.
+
+## V2 작업 상태 (2026-11-19)
+
+V2는 기존 프로젝트에 구현했습니다. 후속 사용자 승인으로 운영 DB·Vault·서명 발송 스케줄러·Edge를 적용하고 실제 서버 검증을 수행했습니다. Pages 배포와 공지·팝업 게시를 진행 중입니다. 최신 상태는 [운영 검증 기록](docs/V2_RELEASE_VERIFICATION.md)을 참고하세요.
+
+- PWA 설치 안내·선택형 업데이트·정적 UI 캐시·오프라인 화면.
+- 알림 센터·계정별 설정·서버 미읽음 배지·다른 기기와 30초 동기화.
+- 기기별 Web Push 구독과 서버 발송 대기열·재시도·방해금지·통계. 실제 수신에는 VAPID/서버 secrets/주기 실행 설정 필요.
+- 글 구독·북마크·내 활동·신고 결과·선택 ID 멘션(검색 노출 기본 꺼짐).
+- 글·수정 초안 자동 저장·24시간 만료·수동 삭제·로그아웃/탈퇴 정리.
+- 기존 owner/moderator·계정 제재/이의 제기·공지 권한 모델 유지.
+
+[구현 및 검증](docs/V2_IMPLEMENTATION.md) · [PWA](docs/PWA_GUIDE.md) · [알림 설계](docs/NOTIFICATION_SYSTEM.md) · [배포·설정·공지 게시](docs/DEPLOYMENT.md) · [변경 이력](CHANGELOG.md)
 
 ## 가입과 로그인
 
@@ -54,6 +67,9 @@ admin 계정은 사용자 요청에 따라 서버에서 관리자 지정했습�
     npm test
     npm run test:db
     npm run test:e2e
+    npm run test:pwa
+    npm run test:edge
+    npm run test:e2e
     npm run build
     npm audit
 
@@ -77,7 +93,7 @@ admin 계정은 사용자 요청에 따라 서버에서 관리자 지정했습�
     tests/unit·database·e2e·integration
     docs            설계·보안·배포·진행·검증
 
-연결/Pages 배포는 docs/deployment.md, 검증 결과는 docs/verification.md, 보안 경계는 docs/security.md를 참고하세요. 파일 첨부·푸시 알림·사용자 차단 UI·V2/V3는 구현 범위 밖입니다. 정식 운영 정책과 이용약관/개인정보 처리방침은 운영자가 확정해야 합니다.
+연결/Pages 배포는 docs/DEPLOYMENT.md, 검증 결과는 docs/verification.md, 보안 경계는 docs/security.md를 참고하세요. 파일 첨부·사용자 차단 UI·V3는 이번 범위에 포함하지 않습니다. V2 푸시 코드는 구현했으며 실제 운영 수신은 서버 설정 및 승인 후 검증해야 합니다. 정식 운영 정책과 이용약관/개인정보 처리방침은 운영자가 확정해야 합니다.
 
 ## 모바일·PC GUI
 

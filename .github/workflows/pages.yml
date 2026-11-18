@@ -8,6 +8,9 @@ on:
         'src/**',
         'public/**',
         'scripts/check-deployment.mjs',
+        'scripts/pwa-plugin.js',
+        'scripts/verify-glob-patch.mjs',
+        'vendor/**',
         'index.html',
         'vite.config.js',
         'package*.json',
@@ -28,9 +31,12 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - run: npm audit --audit-level=moderate
+      - run: npm run verify:glob-patch
       - run: npm run lint
       - run: npm test
       - run: npm run test:db
+      - run: npm run test:pwa
       - name: Build static frontend
         run: |
           test -n "$VITE_SUPABASE_PUBLISHABLE_KEY"
@@ -38,6 +44,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_VAPID_PUBLIC_KEY: ${{ vars.VITE_VAPID_PUBLIC_KEY }}
           VITE_SCHOOL_NAME: 안남중학교
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
